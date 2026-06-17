@@ -94,9 +94,13 @@ export default async function JogosPage() {
       ) : (
         [...grupos.entries()].map(([k, jogosDoDia]) => (
           <section key={k} className="flex flex-col gap-3">
-            <h2 className="sticky top-0 z-[1] -mx-4 bg-background px-4 py-2 text-sm font-extrabold uppercase tracking-wide text-foreground">
+            <h2 className="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b-2 border-border bg-background px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide text-foreground">
               {rotuloData(jogosDoDia[0].kickoff)}
-              {k === hoje ? " · hoje" : ""}
+              {k === hoje ? (
+                <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-extrabold text-secondary-foreground">
+                  hoje
+                </span>
+              ) : null}
             </h2>
             {jogosDoDia.map((j) => (
               <JogoCard

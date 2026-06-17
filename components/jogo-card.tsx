@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Lock } from "lucide-react";
+import { Check, Lock, Pencil } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { bandeira } from "@/lib/bandeiras";
@@ -68,6 +68,8 @@ export function JogoCard({
 }) {
   const [nowMs, setNowMs] = useState(serverNowMs);
   const [salvoOk, setSalvoOk] = useState(false);
+  // Já palpitou? Campos travados até clicar em "Editar palpite".
+  const [editando, setEditando] = useState(false);
   const [resultado, setResultado] = useState<Resultado | null>(
     palpite?.resultado ?? null,
   );
@@ -100,6 +102,8 @@ export function JogoCard({
     : (FASE_LABEL[jogo.fase] ?? jogo.fase);
 
   const obrigatoriosOk = resultado != null && ambas != null && over != null;
+  // Sem palpite ainda OU clicou em editar -> formulário liberado.
+  const editavel = !palpite || editando;
 
   function handleSalvar() {
     setMsg(null);
@@ -115,12 +119,24 @@ export function JogoCard({
         placar2: p2,
       });
       if (res.ok) {
+        setEditando(false); // volta pro modo travado (palpite carimbado)
         setSalvoOk(true);
         setTimeout(() => setSalvoOk(false), 2200);
       } else {
         setMsg({ ok: false, texto: res.error ?? "Erro ao salvar." });
       }
     });
+  }
+
+  function handleCancelar() {
+    // Reverte aos valores salvos e tranca de novo.
+    setResultado(palpite?.resultado ?? null);
+    setAmbas(palpite?.ambasMarcam ?? null);
+    setOver(palpite?.overDoisMeio ?? null);
+    setPlacar1(palpite?.placar1 != null ? String(palpite.placar1) : "");
+    setPlacar2(palpite?.placar2 != null ? String(palpite.placar2) : "");
+    setMsg(null);
+    setEditando(false);
   }
 
   return (
@@ -182,6 +198,26 @@ export function JogoCard({
 
         {travado ? (
           <PalpiteCarimbado palpite={palpite} jogo={jogo} />
+        ) : !editavel ? (
+          /* Já palpitou: campos travados, com botão pra liberar a edição. */
+          <>
+            {salvoOk ? (
+              <p
+                role="status"
+                className="rounded-md border-2 border-border bg-brand-green-dark px-3 py-2 text-center text-sm font-bold text-white"
+              >
+                ✓ Palpite salvo!
+              </p>
+            ) : null}
+            <PalpiteCarimbado palpite={palpite} jogo={jogo} />
+            <button
+              type="button"
+              onClick={() => setEditando(true)}
+              className="flex h-11 items-center justify-center gap-2 rounded-md border-2 border-border bg-secondary-background text-base font-extrabold text-foreground shadow-[3px_3px_0_0_var(--border)] transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            >
+              <Pencil className="size-4" /> Editar palpite
+            </button>
+          </>
         ) : (
           <>
             {/* Resultado */}
@@ -252,31 +288,30 @@ export function JogoCard({
               </p>
             ) : null}
 
-            <button
-              type="button"
-              onClick={handleSalvar}
-              disabled={!obrigatoriosOk || isPending || salvoOk}
-              className={cn(
-                "flex h-11 items-center justify-center gap-2 rounded-md border-2 border-border text-base font-extrabold shadow-[3px_3px_0_0_var(--border)] transition-all",
-                "active:translate-x-[3px] active:translate-y-[3px] active:shadow-none",
-                "disabled:pointer-events-none",
-                salvoOk
-                  ? "bg-brand-green-dark text-white"
-                  : "bg-secondary text-secondary-foreground disabled:opacity-50",
-              )}
-            >
-              {salvoOk ? (
-                <>
-                  <Check className="size-5" strokeWidth={3} /> Salvo!
-                </>
-              ) : isPending ? (
-                "Salvando..."
-              ) : palpite ? (
-                "Atualizar palpite"
-              ) : (
-                "Salvar palpite"
-              )}
-            </button>
+            <div className="flex gap-2">
+              {editando ? (
+                <button
+                  type="button"
+                  onClick={handleCancelar}
+                  disabled={isPending}
+                  className="flex h-11 flex-1 items-center justify-center rounded-md border-2 border-border bg-secondary-background text-base font-extrabold text-foreground shadow-[3px_3px_0_0_var(--border)] transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Cancelar
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleSalvar}
+                disabled={!obrigatoriosOk || isPending}
+                className="flex h-11 flex-1 items-center justify-center rounded-md border-2 border-border bg-secondary text-base font-extrabold text-secondary-foreground shadow-[3px_3px_0_0_var(--border)] transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {isPending
+                  ? "Salvando..."
+                  : palpite
+                    ? "Atualizar palpite"
+                    : "Salvar palpite"}
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -288,12 +323,15 @@ function Time({ sigla, nome }: { sigla: string; nome: string }) {
   const flag = bandeira(sigla);
   return (
     <div className="flex flex-1 flex-col items-center gap-1.5">
-      <span className="flex size-12 items-center justify-center rounded-full border-[2.5px] border-border bg-secondary-background text-sm font-extrabold text-foreground">
-        {sigla}
+      <span
+        className={cn(
+          "flex size-12 items-center justify-center overflow-hidden rounded-full border-[2.5px] border-border bg-secondary-background font-extrabold text-foreground",
+          flag ? "text-[26px] leading-none" : "text-sm",
+        )}
+      >
+        {flag || sigla}
       </span>
-      <span className="text-xs font-bold text-foreground">
-        {flag ? `${flag} ${nome}` : nome}
-      </span>
+      <span className="text-xs font-bold text-foreground">{nome}</span>
     </div>
   );
 }
