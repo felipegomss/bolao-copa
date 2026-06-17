@@ -60,6 +60,9 @@ export default async function JogosPage() {
   ).length;
   const temJogoHoje = jogosHojeAbertos.length > 0;
 
+  // O próximo jogo que ainda dá pra palpitar (mais cedo, já que está ordenado).
+  const proximoId = jogos.find((j) => j.kickoff.getTime() > agora)?.id;
+
   return (
     <AppShell aside={<TabelaRanking ranking={ranking} jogadorId={jogadorId} />}>
       <div className="flex flex-col gap-5 py-5">
@@ -99,6 +102,7 @@ export default async function JogosPage() {
               <JogoCard
                 key={j.id}
                 serverNowMs={agora}
+                proximo={j.id === proximoId}
                 jogo={{
                   id: j.id,
                   fase: j.fase,

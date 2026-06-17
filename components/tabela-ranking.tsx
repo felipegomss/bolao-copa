@@ -1,7 +1,8 @@
-import { Crown } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import type { LinhaRanking } from "@/lib/ranking";
+
+const MEDALHAS = ["🥇", "🥈", "🥉"];
+const PODIO_BG = ["bg-brand-yellow", "bg-[#d4d4d8]", "bg-[#e0a35f]"];
 
 export function TabelaRanking({
   ranking,
@@ -31,6 +32,7 @@ export function TabelaRanking({
         {ranking.map((l, i) => {
           const pos = i + 1;
           const lider = pos === 1 && temPontos;
+          const podio = temPontos && pos <= 3;
           const eu = l.jogadorId === jogadorId;
           return (
             <li
@@ -45,8 +47,8 @@ export function TabelaRanking({
               <span
                 className={cn(
                   "flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-border text-sm font-extrabold",
-                  lider
-                    ? "bg-brand-yellow text-brand-black"
+                  podio
+                    ? `${PODIO_BG[pos - 1]} text-brand-black`
                     : "bg-secondary-background text-foreground",
                 )}
               >
@@ -56,13 +58,12 @@ export function TabelaRanking({
               {/* Nome + desempates */}
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="flex items-center gap-1.5 truncate text-base font-extrabold capitalize text-foreground">
-                  {l.nome}
-                  {lider ? (
-                    <Crown
-                      className="size-4 shrink-0 text-brand-black"
-                      aria-label="líder"
-                    />
+                  {podio ? (
+                    <span aria-hidden className="shrink-0">
+                      {MEDALHAS[pos - 1]}
+                    </span>
                   ) : null}
+                  {l.nome}
                   {eu ? (
                     <span className="rounded border border-border px-1 text-[10px] font-bold uppercase text-muted-foreground">
                       você

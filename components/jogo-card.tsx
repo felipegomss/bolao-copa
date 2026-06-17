@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Lock } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { bandeira } from "@/lib/bandeiras";
@@ -59,12 +59,15 @@ export function JogoCard({
   jogo,
   palpite,
   serverNowMs,
+  proximo = false,
 }: {
   jogo: JogoCardData;
   palpite: PalpiteData;
   serverNowMs: number;
+  proximo?: boolean;
 }) {
   const [nowMs, setNowMs] = useState(serverNowMs);
+  const [salvoOk, setSalvoOk] = useState(false);
   const [resultado, setResultado] = useState<Resultado | null>(
     palpite?.resultado ?? null,
   );
@@ -111,15 +114,17 @@ export function JogoCard({
         placar1: p1,
         placar2: p2,
       });
-      setMsg({
-        ok: res.ok,
-        texto: res.ok ? "Palpite salvo!" : (res.error ?? "Erro ao salvar."),
-      });
+      if (res.ok) {
+        setSalvoOk(true);
+        setTimeout(() => setSalvoOk(false), 2200);
+      } else {
+        setMsg({ ok: false, texto: res.error ?? "Erro ao salvar." });
+      }
     });
   }
 
   return (
-    <article className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
+    <article className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--border)] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300">
       {/* Header */}
       <header
         className={cn(
@@ -127,8 +132,13 @@ export function JogoCard({
           travado ? "bg-foreground text-background" : "bg-primary text-primary-foreground",
         )}
       >
-        <span className="text-xs font-extrabold uppercase tracking-wide">
+        <span className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wide">
           {cabecalho}
+          {proximo && !travado ? (
+            <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-extrabold text-secondary-foreground">
+              PRÓXIMO
+            </span>
+          ) : null}
         </span>
         <span className="flex items-center gap-1.5 text-xs font-bold">
           {travado ? (
@@ -136,7 +146,12 @@ export function JogoCard({
               <Lock className="size-3.5" aria-hidden /> PALPITES FECHADOS
             </>
           ) : (
-            jogo.hora
+            <>
+              {palpite ? (
+                <Check className="size-3.5" aria-label="já palpitado" strokeWidth={3} />
+              ) : null}
+              {jogo.hora}
+            </>
           )}
         </span>
       </header>
@@ -228,15 +243,10 @@ export function JogoCard({
               />
             </Mercado>
 
-            {msg ? (
+            {msg && !msg.ok ? (
               <p
-                role="status"
-                className={cn(
-                  "rounded-md border-2 border-border px-3 py-2 text-sm font-bold",
-                  msg.ok
-                    ? "bg-brand-green-dark text-white"
-                    : "bg-destructive text-destructive-foreground",
-                )}
+                role="alert"
+                className="rounded-md border-2 border-border bg-destructive px-3 py-2 text-sm font-bold text-destructive-foreground"
               >
                 {msg.texto}
               </p>
@@ -245,18 +255,27 @@ export function JogoCard({
             <button
               type="button"
               onClick={handleSalvar}
-              disabled={!obrigatoriosOk || isPending}
+              disabled={!obrigatoriosOk || isPending || salvoOk}
               className={cn(
-                "h-11 rounded-md border-2 border-border bg-secondary text-base font-extrabold text-secondary-foreground shadow-[3px_3px_0_0_var(--border)] transition-all",
+                "flex h-11 items-center justify-center gap-2 rounded-md border-2 border-border text-base font-extrabold shadow-[3px_3px_0_0_var(--border)] transition-all",
                 "active:translate-x-[3px] active:translate-y-[3px] active:shadow-none",
-                "disabled:opacity-50 disabled:pointer-events-none",
+                "disabled:pointer-events-none",
+                salvoOk
+                  ? "bg-brand-green-dark text-white"
+                  : "bg-secondary text-secondary-foreground disabled:opacity-50",
               )}
             >
-              {isPending
-                ? "Salvando..."
-                : palpite
-                  ? "Atualizar palpite"
-                  : "Salvar palpite"}
+              {salvoOk ? (
+                <>
+                  <Check className="size-5" strokeWidth={3} /> Salvo!
+                </>
+              ) : isPending ? (
+                "Salvando..."
+              ) : palpite ? (
+                "Atualizar palpite"
+              ) : (
+                "Salvar palpite"
+              )}
             </button>
           </>
         )}
@@ -328,7 +347,7 @@ function Toggle({
         "h-10 flex-1 rounded-md border-2 border-border text-sm font-bold transition-all",
         ativo
           ? "translate-x-[2px] translate-y-[2px] bg-main text-main-foreground shadow-none"
-          : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--border)]",
+          : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
       )}
     >
       {children}
