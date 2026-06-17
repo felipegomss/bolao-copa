@@ -1,8 +1,11 @@
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { agendarApuracao } from "@/lib/apuracao";
 import { chaveData, chaveHoje, rotuloData, horaBR, agoraMs } from "@/lib/datas";
+import { calcularRanking } from "@/lib/ranking";
 import { JogoCard, type PalpiteData } from "@/components/jogo-card";
+import { AppShell } from "@/components/app-shell";
+import { TabelaRanking } from "@/components/tabela-ranking";
 import type { Resultado } from "@/lib/pontuacao";
 
 export const dynamic = "force-dynamic";
@@ -12,9 +15,10 @@ export default async function JogosPage() {
   const session = await auth();
   const jogadorId = session?.user?.id ?? "";
 
-  const [jogosRaw, palpitesRaw] = await Promise.all([
+  const [jogosRaw, palpitesRaw, ranking] = await Promise.all([
     prisma.jogo.findMany({ orderBy: { kickoff: "asc" } }),
     prisma.palpite.findMany({ where: { jogadorId } }),
+    calcularRanking(),
   ]);
 
   const palpitePorJogo = new Map<string, PalpiteData>();
@@ -55,28 +59,14 @@ export default async function JogosPage() {
   ).length;
   const temJogoHoje = jogosHojeAbertos.length > 0;
 
-  async function logout() {
-    "use server";
-    await signOut({ redirectTo: "/login" });
-  }
-
   return (
-    <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col gap-5 px-4 py-5">
-      <header className="flex items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-extrabold text-foreground">Jogos</h1>
-          <p className="text-sm font-medium text-muted-foreground">
-            E aí, {session?.user?.name}!
-          </p>
-        </div>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="rounded-md border-2 border-border bg-secondary-background px-3 py-1.5 text-sm font-bold text-foreground shadow-[2px_2px_0_0_var(--brand-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-          >
-            Sair
-          </button>
-        </form>
+    <AppShell aside={<TabelaRanking ranking={ranking} jogadorId={jogadorId} />}>
+      <div className="flex flex-col gap-5 py-5">
+      <header>
+        <h1 className="text-2xl font-extrabold text-foreground">Jogos</h1>
+        <p className="text-sm font-medium text-muted-foreground">
+          E aí, {session?.user?.name}!
+        </p>
       </header>
 
       <div
@@ -125,6 +115,7 @@ export default async function JogosPage() {
           </section>
         ))
       )}
-    </div>
+      </div>
+    </AppShell>
   );
 }

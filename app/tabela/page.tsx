@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { agendarApuracao } from "@/lib/apuracao";
 import { calcularRanking } from "@/lib/ranking";
 import { TabelaRanking } from "@/components/tabela-ranking";
+import { AppShell } from "@/components/app-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,8 @@ export default async function TabelaPage() {
   const ranking = await calcularRanking();
 
   return (
-    <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col gap-5 px-4 py-5">
+    <AppShell>
+      <div className="flex flex-col gap-5 py-5">
       <header>
         <h1 className="text-2xl font-extrabold text-foreground">Tabela</h1>
         <p className="text-sm font-medium text-muted-foreground">
@@ -25,6 +27,7 @@ export default async function TabelaPage() {
         Desempate: pontos → placares exatos → resultados (1X2) → jogos cheios →
         nome.
       </p>
-    </div>
+      </div>
+    </AppShell>
   );
 }

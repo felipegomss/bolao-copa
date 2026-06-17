@@ -7,6 +7,7 @@ import {
   HistoricoCard,
   type HistoricoPalpite,
 } from "@/components/historico-card";
+import { AppShell } from "@/components/app-shell";
 import type { Resultado } from "@/lib/pontuacao";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +42,8 @@ export default async function HistoricoPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col gap-5 px-4 py-5">
+    <AppShell>
+      <div className="flex flex-col gap-5 py-5">
       <header>
         <h1 className="text-2xl font-extrabold text-foreground">Histórico</h1>
         <p className="text-sm font-medium text-muted-foreground">
@@ -76,6 +78,7 @@ export default async function HistoricoPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </AppShell>
   );
 }
