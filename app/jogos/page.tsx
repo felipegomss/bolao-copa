@@ -1,10 +1,53 @@
 import { auth, signOut } from "@/auth";
-import { Button } from "@/components/ui/button";
+import { prisma } from "@/lib/prisma";
+import { chaveData, chaveHoje, rotuloData, horaBR, agoraMs } from "@/lib/datas";
+import { JogoCard, type PalpiteData } from "@/components/jogo-card";
+import type { Resultado } from "@/lib/pontuacao";
 
-// Placeholder protegido — só pra validar auth/proxy nesta etapa.
-// A tela real de jogos vem na Etapa 4.
+export const dynamic = "force-dynamic";
+
 export default async function JogosPage() {
   const session = await auth();
+  const jogadorId = session?.user?.id ?? "";
+
+  const [jogosRaw, palpitesRaw] = await Promise.all([
+    prisma.jogo.findMany({ orderBy: { kickoff: "asc" } }),
+    prisma.palpite.findMany({ where: { jogadorId } }),
+  ]);
+
+  const palpitePorJogo = new Map<string, PalpiteData>();
+  for (const p of palpitesRaw) {
+    palpitePorJogo.set(p.jogoId, {
+      resultado: p.resultado as Resultado,
+      ambasMarcam: p.ambasMarcam,
+      overDoisMeio: p.overDoisMeio,
+      placar1: p.placar1,
+      placar2: p.placar2,
+    });
+  }
+
+  const hoje = chaveHoje();
+  const agora = agoraMs();
+
+  // Só jogos de hoje em diante (passados ficam no histórico).
+  const jogos = jogosRaw.filter((j) => chaveData(j.kickoff) >= hoje);
+
+  // Agrupa por dia.
+  const grupos = new Map<string, typeof jogos>();
+  for (const j of jogos) {
+    const k = chaveData(j.kickoff);
+    const arr = grupos.get(k);
+    if (arr) arr.push(j);
+    else grupos.set(k, [j]);
+  }
+
+  // Quantos jogos de HOJE ainda dá pra palpitar e não foram palpitados.
+  const faltamHoje = jogos.filter(
+    (j) =>
+      chaveData(j.kickoff) === hoje &&
+      j.kickoff.getTime() > agora &&
+      !palpitePorJogo.has(j.id),
+  ).length;
 
   async function logout() {
     "use server";
@@ -12,28 +55,68 @@ export default async function JogosPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center gap-6 px-4 py-12 text-center">
-      <div className="rounded-[var(--radius-base)] border-[2.5px] border-border bg-card p-6 shadow-[4px_4px_0_0_var(--brand-black)]">
-        <p className="text-sm font-bold uppercase tracking-wide text-primary">
-          Logado
-        </p>
-        <h1 className="mt-2 text-2xl font-extrabold text-foreground">
-          E aí, {session?.user?.name}!
-        </h1>
-        <p className="mt-2 text-sm font-medium text-muted-foreground">
-          Rota protegida funcionando. A tela de jogos vem na Etapa 4.
-        </p>
-
-        <form action={logout} className="mt-6">
-          <Button
+    <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col gap-5 px-4 py-5">
+      <header className="flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-extrabold text-foreground">Jogos</h1>
+          <p className="text-sm font-medium text-muted-foreground">
+            E aí, {session?.user?.name}!
+          </p>
+        </div>
+        <form action={logout}>
+          <button
             type="submit"
-            variant="secondary"
-            className="h-11 w-full border-2 border-border font-extrabold shadow-[3px_3px_0_0_var(--brand-black)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            className="rounded-md border-2 border-border bg-secondary-background px-3 py-1.5 text-sm font-bold text-foreground shadow-[2px_2px_0_0_var(--brand-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             Sair
-          </Button>
+          </button>
         </form>
+      </header>
+
+      <div
+        className={
+          faltamHoje > 0
+            ? "rounded-[var(--radius-base)] border-[2.5px] border-border bg-accent px-4 py-3 text-sm font-extrabold text-accent-foreground shadow-[4px_4px_0_0_var(--brand-black)]"
+            : "rounded-[var(--radius-base)] border-[2.5px] border-border bg-brand-green-dark px-4 py-3 text-sm font-extrabold text-white shadow-[4px_4px_0_0_var(--brand-black)]"
+        }
+      >
+        {faltamHoje > 0
+          ? `Faltam ${faltamHoje} ${faltamHoje === 1 ? "jogo" : "jogos"} pra palpitar hoje!`
+          : "Tudo palpitado por hoje. 👊"}
       </div>
-    </main>
+
+      {jogos.length === 0 ? (
+        <p className="rounded-[var(--radius-base)] border-2 border-dashed border-border bg-muted px-4 py-8 text-center text-sm font-bold text-muted-foreground">
+          Nenhum jogo por vir. Confira o histórico e a tabela.
+        </p>
+      ) : (
+        [...grupos.entries()].map(([k, jogosDoDia]) => (
+          <section key={k} className="flex flex-col gap-3">
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-foreground">
+              {rotuloData(jogosDoDia[0].kickoff)}
+              {k === hoje ? " · hoje" : ""}
+            </h2>
+            {jogosDoDia.map((j) => (
+              <JogoCard
+                key={j.id}
+                serverNowMs={agora}
+                jogo={{
+                  id: j.id,
+                  fase: j.fase,
+                  grupo: j.grupo,
+                  kickoffMs: j.kickoff.getTime(),
+                  hora: horaBR(j.kickoff),
+                  time1: j.time1,
+                  time2: j.time2,
+                  sigla1: j.sigla1,
+                  sigla2: j.sigla2,
+                }}
+                palpite={palpitePorJogo.get(j.id) ?? null}
+              />
+            ))}
+          </section>
+        ))
+      )}
+    </div>
   );
 }
