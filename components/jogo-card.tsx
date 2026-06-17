@@ -331,7 +331,9 @@ function Time({ sigla, nome }: { sigla: string; nome: string }) {
       >
         {flag || sigla}
       </span>
-      <span className="text-xs font-bold text-foreground">{nome}</span>
+      <span className="text-xs font-bold text-foreground">
+        {nome} - {sigla}
+      </span>
     </div>
   );
 }
