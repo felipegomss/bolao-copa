@@ -49,8 +49,9 @@ function formataCountdown(ms: number) {
   const h = Math.floor((totalSeg % 86400) / 3600);
   const m = Math.floor((totalSeg % 3600) / 60);
   const s = totalSeg % 60;
-  const hms = `${dois(h)}:${dois(m)}:${dois(s)}`;
-  return dias > 0 ? `${dias}d ${hms}` : hms;
+  // Mais de 24h: mostra só os dias. Menos de 24h: contagem cheia HH:MM:SS.
+  if (dias > 0) return `${dias}d`;
+  return `${dois(h)}:${dois(m)}:${dois(s)}`;
 }
 
 export function JogoCard({
