@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { agendarApuracao } from "@/lib/apuracao";
 import { rotuloData, horaBR } from "@/lib/datas";
 import { OCULTAR_JOGOS_SEM_PONTOS } from "@/lib/config";
 import {
@@ -11,6 +12,7 @@ import type { Resultado } from "@/lib/pontuacao";
 export const dynamic = "force-dynamic";
 
 export default async function HistoricoPage() {
+  agendarApuracao();
   const session = await auth();
   const jogadorId = session?.user?.id ?? "";
 

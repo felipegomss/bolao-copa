@@ -1,5 +1,6 @@
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { agendarApuracao } from "@/lib/apuracao";
 import { chaveData, chaveHoje, rotuloData, horaBR, agoraMs } from "@/lib/datas";
 import { JogoCard, type PalpiteData } from "@/components/jogo-card";
 import type { Resultado } from "@/lib/pontuacao";
@@ -7,6 +8,7 @@ import type { Resultado } from "@/lib/pontuacao";
 export const dynamic = "force-dynamic";
 
 export default async function JogosPage() {
+  agendarApuracao();
   const session = await auth();
   const jogadorId = session?.user?.id ?? "";
 

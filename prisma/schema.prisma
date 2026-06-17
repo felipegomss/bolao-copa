@@ -37,6 +37,12 @@ model Jogo {
   palpites    Palpite[]
 }
 
+// Linha única (id "singleton") pra throttle da apuração on-access.
+model EstadoApuracao {
+  id       String   @id @default("singleton")
+  rodadaEm DateTime
+}
+
 model Palpite {
   id           String   @id @default(cuid())
   jogador      Jogador  @relation(fields: [jogadorId], references: [id])
