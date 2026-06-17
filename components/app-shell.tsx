@@ -32,7 +32,7 @@ export function AppShell({
       {/* Top bar mobile */}
       <header className="flex shrink-0 items-center justify-between border-b-[2.5px] border-border bg-card px-4 py-3 lg:hidden">
         <span className="text-base font-extrabold text-foreground">
-          Bolão da Copa 2026
+          Bolão da Tropa ⚽️
         </span>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -52,7 +52,7 @@ export function AppShell({
       <header className="hidden shrink-0 border-b-[2.5px] border-border bg-card lg:block">
         <div className="mx-auto flex max-w-[980px] items-center justify-between px-6 py-3">
           <span className="text-lg font-extrabold text-foreground">
-            Bolão da Copa 2026
+            Bolão da Tropa ⚽️
           </span>
           <nav className="flex items-center gap-2">
             {TABS.map(({ href, label, Icon }) => (

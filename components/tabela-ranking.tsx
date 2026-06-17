@@ -19,7 +19,7 @@ export function TabelaRanking({
         <span className="text-sm font-extrabold uppercase tracking-wide">
           Tabela
         </span>
-        <span className="text-xs font-bold opacity-90">Bolão da Copa</span>
+        <span className="text-xs font-bold opacity-90">Bolão da Tropa</span>
       </header>
 
       {!temPontos ? (
