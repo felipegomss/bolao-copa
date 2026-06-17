@@ -29,8 +29,11 @@ export default async function JogosPage() {
   const hoje = chaveHoje();
   const agora = agoraMs();
 
-  // Só jogos de hoje em diante (passados ficam no histórico).
-  const jogos = jogosRaw.filter((j) => chaveData(j.kickoff) >= hoje);
+  // Só jogos que valem pontos (a partir do corte) e de hoje em diante.
+  // Jogos pré-corte não são palpitáveis — aparecem no histórico.
+  const jogos = jogosRaw.filter(
+    (j) => j.valePontos && chaveData(j.kickoff) >= hoje,
+  );
 
   // Agrupa por dia.
   const grupos = new Map<string, typeof jogos>();
@@ -41,13 +44,14 @@ export default async function JogosPage() {
     else grupos.set(k, [j]);
   }
 
-  // Quantos jogos de HOJE ainda dá pra palpitar e não foram palpitados.
-  const faltamHoje = jogos.filter(
-    (j) =>
-      chaveData(j.kickoff) === hoje &&
-      j.kickoff.getTime() > agora &&
-      !palpitePorJogo.has(j.id),
+  // Jogos de HOJE que valem e ainda dá pra palpitar.
+  const jogosHojeAbertos = jogos.filter(
+    (j) => chaveData(j.kickoff) === hoje && j.kickoff.getTime() > agora,
+  );
+  const faltamHoje = jogosHojeAbertos.filter(
+    (j) => !palpitePorJogo.has(j.id),
   ).length;
+  const temJogoHoje = jogosHojeAbertos.length > 0;
 
   async function logout() {
     "use server";
@@ -80,9 +84,11 @@ export default async function JogosPage() {
             : "rounded-[var(--radius-base)] border-[2.5px] border-border bg-brand-green-dark px-4 py-3 text-sm font-extrabold text-white shadow-[4px_4px_0_0_var(--brand-black)]"
         }
       >
-        {faltamHoje > 0
-          ? `Faltam ${faltamHoje} ${faltamHoje === 1 ? "jogo" : "jogos"} pra palpitar hoje!`
-          : "Tudo palpitado por hoje. 👊"}
+        {!temJogoHoje
+          ? "Sem jogo valendo hoje. Já deixa os próximos palpitados! 👀"
+          : faltamHoje > 0
+            ? `Faltam ${faltamHoje} ${faltamHoje === 1 ? "jogo" : "jogos"} pra palpitar hoje!`
+            : "Tudo palpitado por hoje. 👊"}
       </div>
 
       {jogos.length === 0 ? (

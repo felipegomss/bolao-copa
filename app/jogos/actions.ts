@@ -51,6 +51,11 @@ export async function salvarPalpite(
     return { ok: false, error: "Jogo não encontrado." };
   }
 
+  // Jogos pré-corte não valem pontos — não são palpitáveis.
+  if (!jogo.valePontos) {
+    return { ok: false, error: "Esse jogo não vale pontos no bolão." };
+  }
+
   // TRAVA no servidor: só aceita enquanto agora < kickoff.
   if (Date.now() >= jogo.kickoff.getTime()) {
     return { ok: false, error: "Jogo já começou — palpites fechados." };

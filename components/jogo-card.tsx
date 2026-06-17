@@ -201,7 +201,7 @@ export function JogoCard({
             </Mercado>
 
             {/* Placar exato */}
-            <Mercado titulo="Placar exato (opcional)" peso={PESOS.placarExato}>
+            <Mercado titulo="Placar exato (opcional)" peso={PESOS.placarExato} center>
               <PlacarInput
                 aria-label={`Gols ${jogo.sigla1}`}
                 value={placar1}
@@ -268,10 +268,12 @@ function Time({ sigla, nome }: { sigla: string; nome: string }) {
 function Mercado({
   titulo,
   peso,
+  center,
   children,
 }: {
   titulo: string;
   peso: number;
+  center?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -282,7 +284,14 @@ function Mercado({
           x{peso}
         </span>
       </div>
-      <div className="flex items-center gap-2">{children}</div>
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          center && "justify-center",
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }
