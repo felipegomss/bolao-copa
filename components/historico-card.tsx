@@ -1,6 +1,7 @@
 import { Check, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { bandeira } from "@/lib/bandeiras";
 import {
   calcularPontos,
   resultadoReal,
@@ -78,12 +79,16 @@ export function HistoricoCard({
       <div className="flex flex-col gap-3 p-4">
         {/* Placar real */}
         <div className="flex items-center justify-center gap-3 text-center font-extrabold">
-          <span className="flex-1 text-right text-foreground">{jogo.sigla1}</span>
+          <span className="flex-1 text-right text-foreground">
+            {bandeira(jogo.sigla1)} {jogo.sigla1}
+          </span>
           <span className="tabular-nums rounded-md border-2 border-border bg-secondary-background px-3 py-1 text-lg text-foreground">
             {jogo.gols1} <span className="text-muted-foreground">x</span>{" "}
             {jogo.gols2}
           </span>
-          <span className="flex-1 text-left text-foreground">{jogo.sigla2}</span>
+          <span className="flex-1 text-left text-foreground">
+            {bandeira(jogo.sigla2)} {jogo.sigla2}
+          </span>
         </div>
 
         {!palpite ? (

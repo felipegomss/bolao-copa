@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Lock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { bandeira } from "@/lib/bandeiras";
 import { PESOS, type Resultado } from "@/lib/pontuacao";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { salvarPalpite } from "@/app/jogos/actions";
@@ -256,12 +257,15 @@ export function JogoCard({
 }
 
 function Time({ sigla, nome }: { sigla: string; nome: string }) {
+  const flag = bandeira(sigla);
   return (
     <div className="flex flex-1 flex-col items-center gap-1.5">
       <span className="flex size-12 items-center justify-center rounded-full border-[2.5px] border-border bg-secondary-background text-sm font-extrabold text-foreground">
         {sigla}
       </span>
-      <span className="text-xs font-bold text-foreground">{nome}</span>
+      <span className="text-xs font-bold text-foreground">
+        {flag ? `${flag} ${nome}` : nome}
+      </span>
     </div>
   );
 }
