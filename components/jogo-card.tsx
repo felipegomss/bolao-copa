@@ -263,7 +263,7 @@ export function JogoCard({
             </Mercado>
 
             {/* Placar exato */}
-            <Mercado titulo="Placar exato (opcional)" peso={PESOS.placarExato} center>
+            <Mercado titulo="Placar exato" peso={PESOS.placarExato} center>
               <PlacarInput
                 aria-label={`Gols ${jogo.sigla1}`}
                 value={placar1}
