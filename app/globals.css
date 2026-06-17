@@ -1,26 +1,140 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+  Tema travado em CLARO (modo de marca). Não usamos a variante .dark:
+  as cores da paleta são fixas e o dark mode do sistema não deve mexer nelas.
+*/
 
 @theme inline {
+  /* shadcn tokens -> paleta da marca */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* tokens neobrutalism.dev (usados pelos componentes que vamos copiar depois) */
+  --color-main: var(--main);
+  --color-main-foreground: var(--main-foreground);
+  --color-secondary-background: var(--secondary-background);
+  --color-overlay: var(--overlay);
+  --shadow-shadow: var(--shadow);
+
+  /* cores extras da marca */
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-green: var(--brand-green);
+  --color-brand-green-dark: var(--brand-green-dark);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-yellow-soft: var(--brand-yellow-soft);
+  --color-brand-black: var(--brand-black);
+
+  /* fontes (corrige a auto-referência circular gerada pelo shadcn init) */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+
+  /* offsets de sombra neobrutalist */
+  --spacing-boxShadowX: 4px;
+  --spacing-boxShadowY: 4px;
+  --spacing-reverseBoxShadowX: -4px;
+  --spacing-reverseBoxShadowY: -4px;
+
+  /* raios */
+  --radius-base: 8px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+
+  /* pesos pesados pra identidade neobrutalist */
+  --font-weight-base: 600;
+  --font-weight-heading: 800;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  color-scheme: light;
+
+  /* paleta da marca */
+  --brand-blue: #2b5fe3;
+  --brand-green: #2fbf5c;
+  --brand-green-dark: #178c42;
+  --brand-yellow: #ffd23f;
+  --brand-yellow-soft: #ffe89a;
+  --brand-black: #111111;
+
+  /* base */
+  --background: #ffffff;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+
+  /* azul = cor primária / marca */
+  --primary: #2b5fe3;
+  --primary-foreground: #ffffff;
+
+  /* amarelo = ação / destaque */
+  --secondary: #ffd23f;
+  --secondary-foreground: #111111;
+
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+
+  /* amarelo suave = accent */
+  --accent: #ffe89a;
+  --accent-foreground: #111111;
+
+  --destructive: #e23b3b;
+  --destructive-foreground: #ffffff;
+
+  /* bordas pretas grossas */
+  --border: #111111;
+  --input: #111111;
+  --ring: #2b5fe3;
+
+  --radius: 0.5rem;
+
+  /* tokens neobrutalism */
+  --main: #2b5fe3;
+  --main-foreground: #ffffff;
+  --secondary-background: #ffffff;
+  --overlay: rgba(17, 17, 17, 0.8);
+  --shadow: 4px 4px 0px 0px var(--border);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: var(--font-weight-heading);
+  }
 }
