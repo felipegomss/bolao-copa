@@ -48,7 +48,7 @@ export default async function LoginPage({
 
       <form
         action={login}
-        className="flex flex-col gap-4 rounded-[var(--radius-base)] border-[2.5px] border-border bg-card p-6 shadow-[4px_4px_0_0_var(--brand-black)]"
+        className="flex flex-col gap-4 rounded-[var(--radius-base)] border-[2.5px] border-border bg-card p-6 shadow-[4px_4px_0_0_var(--border)]"
       >
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="nome" className="font-bold">
@@ -90,7 +90,7 @@ export default async function LoginPage({
 
         <Button
           type="submit"
-          className="mt-1 h-11 border-2 border-border text-base font-extrabold shadow-[3px_3px_0_0_var(--brand-black)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+          className="mt-1 h-11 border-2 border-border text-base font-extrabold shadow-[3px_3px_0_0_var(--border)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
         >
           Entrar
         </Button>

@@ -7,6 +7,7 @@ import { CalendarDays, History, Trophy, LogOut } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { logout } from "@/app/logout/actions";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const TABS = [
   { href: "/jogos", label: "Jogos", Icon: CalendarDays },
@@ -31,15 +32,18 @@ export function AppShell({
         <span className="text-base font-extrabold text-foreground">
           Bolão da Copa 2026
         </span>
-        <form action={logout}>
-          <button
-            type="submit"
-            aria-label="Sair"
-            className="flex size-9 items-center justify-center rounded-md border-2 border-border bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--brand-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-          >
-            <LogOut className="size-4" />
-          </button>
-        </form>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <form action={logout}>
+            <button
+              type="submit"
+              aria-label="Sair"
+              className="flex size-9 items-center justify-center rounded-md border-2 border-border bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            >
+              <LogOut className="size-4" />
+            </button>
+          </form>
+        </div>
       </header>
 
       {/* Top nav desktop */}
@@ -57,17 +61,18 @@ export function AppShell({
                   "flex items-center gap-2 rounded-md border-2 border-border px-3 py-1.5 text-sm font-bold transition-all",
                   ativo(href)
                     ? "bg-main text-main-foreground shadow-none"
-                    : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--brand-black)] hover:translate-x-[1px] hover:translate-y-[1px]",
+                    : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px]",
                 )}
               >
                 <Icon className="size-4" />
                 {label}
               </Link>
             ))}
+            <ThemeToggle />
             <form action={logout}>
               <button
                 type="submit"
-                className="flex items-center gap-2 rounded-md border-2 border-border bg-secondary-background px-3 py-1.5 text-sm font-bold text-foreground shadow-[2px_2px_0_0_var(--brand-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                className="flex items-center gap-2 rounded-md border-2 border-border bg-secondary-background px-3 py-1.5 text-sm font-bold text-foreground shadow-[2px_2px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
               >
                 <LogOut className="size-4" />
                 Sair

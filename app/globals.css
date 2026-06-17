@@ -2,10 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/*
-  Tema travado em CLARO (modo de marca). Não usamos a variante .dark:
-  as cores da paleta são fixas e o dark mode do sistema não deve mexer nelas.
-*/
+/* Tema da marca com modo claro e escuro (toggle via classe .dark). */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   /* shadcn tokens -> paleta da marca */
@@ -120,13 +118,54 @@
   --shadow: 4px 4px 0px 0px var(--border);
 }
 
+.dark {
+  color-scheme: dark;
+
+  /* marca (verde dos pontos um pouco mais claro pra contraste no escuro) */
+  --brand-green-dark: #2bb35a;
+  --brand-black: #111111; /* texto escuro sobre amarelo continua escuro */
+
+  /* base escura (cinzas, não preto puro) */
+  --background: #14141a;
+  --foreground: #ededf0;
+  --card: #1e1e26;
+  --card-foreground: #ededf0;
+  --popover: #1e1e26;
+  --popover-foreground: #ededf0;
+
+  --primary: #3a6af0;
+  --primary-foreground: #ffffff;
+
+  --secondary: #ffd23f;
+  --secondary-foreground: #111111;
+
+  --muted: #2a2a33;
+  --muted-foreground: #a0a0ab;
+
+  --accent: #ffd23f;
+  --accent-foreground: #111111;
+
+  --destructive: #f05252;
+  --destructive-foreground: #ffffff;
+
+  /* bordas e sombra CLARAS no escuro (neobrutalist invertido) */
+  --border: #e6e6ea;
+  --input: #e6e6ea;
+  --ring: #3a6af0;
+
+  --main: #3a6af0;
+  --main-foreground: #ffffff;
+  --secondary-background: #262630;
+  --overlay: rgba(0, 0, 0, 0.8);
+  --shadow: 4px 4px 0px 0px var(--border);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   html {
     @apply font-sans;
-    color-scheme: light;
   }
   body {
     @apply bg-background text-foreground;

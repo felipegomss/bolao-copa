@@ -118,7 +118,7 @@ export function JogoCard({
   }
 
   return (
-    <article className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--brand-black)]">
+    <article className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
       {/* Header */}
       <header
         className={cn(
@@ -238,7 +238,7 @@ export function JogoCard({
               onClick={handleSalvar}
               disabled={!obrigatoriosOk || isPending}
               className={cn(
-                "h-11 rounded-md border-2 border-border bg-secondary text-base font-extrabold text-secondary-foreground shadow-[3px_3px_0_0_var(--brand-black)] transition-all",
+                "h-11 rounded-md border-2 border-border bg-secondary text-base font-extrabold text-secondary-foreground shadow-[3px_3px_0_0_var(--border)] transition-all",
                 "active:translate-x-[3px] active:translate-y-[3px] active:shadow-none",
                 "disabled:opacity-50 disabled:pointer-events-none",
               )}
@@ -319,7 +319,7 @@ function Toggle({
         "h-10 flex-1 rounded-md border-2 border-border text-sm font-bold transition-all",
         ativo
           ? "translate-x-[2px] translate-y-[2px] bg-main text-main-foreground shadow-none"
-          : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--brand-black)]",
+          : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--border)]",
       )}
     >
       {children}
@@ -344,7 +344,7 @@ function PlacarInput({
       max={99}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-12 w-16 rounded-md border-2 border-border bg-secondary-background text-center text-xl font-extrabold text-foreground shadow-[2px_2px_0_0_var(--brand-black)] outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="h-12 w-16 rounded-md border-2 border-border bg-secondary-background text-center text-xl font-extrabold text-foreground shadow-[2px_2px_0_0_var(--border)] outline-none focus-visible:ring-2 focus-visible:ring-ring"
       {...rest}
     />
   );

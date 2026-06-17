@@ -73,8 +73,8 @@ export default async function JogosPage() {
       <div
         className={
           faltamHoje > 0
-            ? "rounded-[var(--radius-base)] border-[2.5px] border-border bg-accent px-4 py-3 text-sm font-extrabold text-accent-foreground shadow-[4px_4px_0_0_var(--brand-black)]"
-            : "rounded-[var(--radius-base)] border-[2.5px] border-border bg-brand-green-dark px-4 py-3 text-sm font-extrabold text-white shadow-[4px_4px_0_0_var(--brand-black)]"
+            ? "rounded-[var(--radius-base)] border-[2.5px] border-border bg-accent px-4 py-3 text-sm font-extrabold text-accent-foreground shadow-[4px_4px_0_0_var(--border)]"
+            : "rounded-[var(--radius-base)] border-[2.5px] border-border bg-brand-green-dark px-4 py-3 text-sm font-extrabold text-white shadow-[4px_4px_0_0_var(--border)]"
         }
       >
         {!temJogoHoje

@@ -61,7 +61,7 @@ export function HistoricoCard({
     real === "time1" ? jogo.sigla1 : real === "time2" ? jogo.sigla2 : "Empate";
 
   return (
-    <article className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--brand-black)]">
+    <article className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
       <header className="flex items-center justify-between gap-2 border-b-[2.5px] border-border bg-foreground px-4 py-2 text-background">
         <span className="text-xs font-extrabold uppercase tracking-wide">
           {cabecalho}

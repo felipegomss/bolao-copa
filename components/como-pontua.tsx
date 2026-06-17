@@ -21,7 +21,7 @@ export function ComoPontua({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
     <details
       open={defaultOpen}
-      className="group overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--brand-black)]"
+      className="group overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--border)]"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-extrabold text-foreground [&::-webkit-details-marker]:hidden">
         Como funciona a pontuação

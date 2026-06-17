@@ -13,7 +13,7 @@ export function TabelaRanking({
   const temPontos = ranking.some((l) => l.palpitados > 0);
 
   return (
-    <div className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--brand-black)]">
+    <div className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
       <header className="flex items-center justify-between border-b-[2.5px] border-border bg-primary px-4 py-2.5 text-primary-foreground">
         <span className="text-sm font-extrabold uppercase tracking-wide">
           Tabela
