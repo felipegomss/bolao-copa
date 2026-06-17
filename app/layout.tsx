@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bolão da Copa 2026",
   description: "Bolão da Copa do Mundo 2026 entre amigos",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2b5fe3",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
