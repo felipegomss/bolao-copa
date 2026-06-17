@@ -1,0 +1,55 @@
+// Bolão da Copa 2026 — schema Prisma
+// Client gerado em lib/generated/prisma (generator novo do Prisma 7)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+// Prisma 7: URLs não vão mais no schema. A URL de migration está no
+// prisma.config.ts; o runtime usa o driver adapter Neon (lib/prisma.ts).
+datasource db {
+  provider = "postgresql"
+}
+
+model Jogador {
+  id       String    @id @default(cuid())
+  nome     String    @unique
+  palpites Palpite[]
+  criadoEm DateTime  @default(now())
+}
+
+model Jogo {
+  id          String    @id @default(cuid())
+  externalId  String?   @unique // id da fonte de dados, pra casar resultados
+  kickoff     DateTime // SEMPRE em UTC
+  fase        String // "grupos" | "16avos" | "8avos" | "quartas" | "semis" | "3lugar" | "final"
+  grupo       String? // "A".."L" na fase de grupos
+  time1       String
+  time2       String
+  sigla1      String // ex "BRA"
+  sigla2      String // ex "SCO"
+  estadio     String?
+  status      String    @default("agendado") // "agendado" | "encerrado"
+  gols1       Int?
+  gols2       Int?
+  valePontos  Boolean   @default(true) // false pros jogos antes do corte
+  palpites    Palpite[]
+}
+
+model Palpite {
+  id           String   @id @default(cuid())
+  jogador      Jogador  @relation(fields: [jogadorId], references: [id])
+  jogadorId    String
+  jogo         Jogo     @relation(fields: [jogoId], references: [id])
+  jogoId       String
+  resultado    String // "time1" | "empate" | "time2"
+  ambasMarcam  Boolean
+  overDoisMeio Boolean
+  placar1      Int?
+  placar2      Int?
+  pontos       Int? // calculado após o jogo encerrar
+  criadoEm     DateTime @default(now())
+
+  @@unique([jogadorId, jogoId])
+}
