@@ -6,6 +6,7 @@ import { calcularRanking } from "@/lib/ranking";
 import { JogoCard, type PalpiteData } from "@/components/jogo-card";
 import { AppShell } from "@/components/app-shell";
 import { TabelaRanking } from "@/components/tabela-ranking";
+import { ComoPontua } from "@/components/como-pontua";
 import type { Resultado } from "@/lib/pontuacao";
 
 export const dynamic = "force-dynamic";
@@ -115,6 +116,8 @@ export default async function JogosPage() {
           </section>
         ))
       )}
+
+      <ComoPontua />
       </div>
     </AppShell>
   );

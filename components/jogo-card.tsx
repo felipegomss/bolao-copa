@@ -282,7 +282,7 @@ function Mercado({
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-foreground">{titulo}</span>
         <span className="rounded border-2 border-border bg-accent px-1.5 py-0.5 text-xs font-extrabold text-accent-foreground">
-          x{peso}
+          {`+${peso}`}
         </span>
       </div>
       <div

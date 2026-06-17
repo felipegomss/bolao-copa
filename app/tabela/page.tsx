@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { agendarApuracao } from "@/lib/apuracao";
 import { calcularRanking } from "@/lib/ranking";
 import { TabelaRanking } from "@/components/tabela-ranking";
+import { ComoPontua } from "@/components/como-pontua";
 import { AppShell } from "@/components/app-shell";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,8 @@ export default async function TabelaPage() {
         Desempate: pontos → placares exatos → resultados (1X2) → jogos cheios →
         nome.
       </p>
+
+      <ComoPontua defaultOpen />
       </div>
     </AppShell>
   );
