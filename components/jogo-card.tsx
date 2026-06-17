@@ -91,6 +91,7 @@ export function JogoCard({
 
   const restante = jogo.kickoffMs - nowMs;
   const travado = restante <= 0;
+  const urgente = !travado && restante < 60 * 60 * 1000; // fecha em menos de 1h
   const cabecalho = jogo.grupo
     ? `Grupo ${jogo.grupo}`
     : (FASE_LABEL[jogo.fase] ?? jogo.fase);
@@ -150,9 +151,17 @@ export function JogoCard({
 
         {/* Countdown */}
         {!travado ? (
-          <p className="text-center text-sm font-bold text-foreground">
-            <span className="text-muted-foreground">fecha em </span>
+          <p
+            className={cn(
+              "text-center text-sm font-bold",
+              urgente ? "text-destructive" : "text-foreground",
+            )}
+          >
+            <span className={urgente ? "" : "text-muted-foreground"}>
+              fecha em{" "}
+            </span>
             <span className="tabular-nums">{formataCountdown(restante)}</span>
+            {urgente ? " ⏰" : ""}
           </p>
         ) : null}
 

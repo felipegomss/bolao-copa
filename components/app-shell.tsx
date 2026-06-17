@@ -26,9 +26,11 @@ export function AppShell({
   const ativo = (href: string) => path === href || path.startsWith(href + "/");
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    // Altura de viewport com scroll interno no <main>: evita os bugs de
+    // position:fixed do Safari iOS (a bottom nav fica em fluxo normal).
+    <div className="flex h-dvh flex-col overflow-hidden">
       {/* Top bar mobile */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b-[2.5px] border-border bg-card px-4 py-3 lg:hidden">
+      <header className="flex shrink-0 items-center justify-between border-b-[2.5px] border-border bg-card px-4 py-3 lg:hidden">
         <span className="text-base font-extrabold text-foreground">
           Bolão da Copa 2026
         </span>
@@ -47,7 +49,7 @@ export function AppShell({
       </header>
 
       {/* Top nav desktop */}
-      <header className="hidden border-b-[2.5px] border-border bg-card lg:block">
+      <header className="hidden shrink-0 border-b-[2.5px] border-border bg-card lg:block">
         <div className="mx-auto flex max-w-[980px] items-center justify-between px-6 py-3">
           <span className="text-lg font-extrabold text-foreground">
             Bolão da Copa 2026
@@ -82,24 +84,24 @@ export function AppShell({
         </div>
       </header>
 
-      {/* Conteúdo */}
-      <main className="flex-1 pb-24 lg:pb-10">
+      {/* Conteúdo — único elemento que rola */}
+      <main className="flex-1 overflow-y-auto overscroll-contain">
         {aside ? (
-          <div className="mx-auto grid w-full max-w-[980px] grid-cols-1 gap-6 px-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-6">
+          <div className="mx-auto grid w-full max-w-[980px] grid-cols-1 gap-6 px-4 pb-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-6">
             <div className="mx-auto w-full max-w-[460px] lg:max-w-none">
               {children}
             </div>
             <aside className="hidden lg:block">
-              <div className="sticky top-6 pt-5">{aside}</div>
+              <div className="sticky top-5">{aside}</div>
             </aside>
           </div>
         ) : (
-          <div className="mx-auto w-full max-w-[460px] px-4">{children}</div>
+          <div className="mx-auto w-full max-w-[460px] px-4 pb-6">{children}</div>
         )}
       </main>
 
-      {/* Bottom nav mobile */}
-      <nav className="fixed inset-x-0 bottom-0 z-10 border-t-[2.5px] border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
+      {/* Bottom nav mobile — em fluxo normal (sem position:fixed) */}
+      <nav className="shrink-0 border-t-[2.5px] border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
         <div className="mx-auto flex max-w-[460px]">
           {TABS.map(({ href, label, Icon }) => (
             <Link
