@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bolão da Tropa ⚽️",
+  title: "Bolão da Tropa",
   description: "Bolão da Tropa — Copa do Mundo 2026 entre amigos",
 };
 
