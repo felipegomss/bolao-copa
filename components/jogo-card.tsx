@@ -254,17 +254,17 @@ export function JogoCard({
               </p>
               <PreviaLinha
                 rotulo="Quem vence"
-                valor={previa ? previa.resultado : "—"}
+                valor={previa ? previa.resultado : ""}
                 peso={PESOS.resultado}
               />
               <PreviaLinha
                 rotulo="Ambas marcam"
-                valor={previa ? (previa.ambas ? "Sim" : "Não") : "—"}
+                valor={previa ? (previa.ambas ? "Sim" : "Não") : ""}
                 peso={PESOS.ambasMarcam}
               />
               <PreviaLinha
                 rotulo="Mais de 2.5 gols"
-                valor={previa ? (previa.over ? "Sim" : "Não") : "—"}
+                valor={previa ? (previa.over ? "Sim" : "Não") : ""}
                 peso={PESOS.overDoisMeio}
               />
             </div>
