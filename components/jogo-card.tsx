@@ -139,6 +139,35 @@ export function JogoCard({
     setEditando(false);
   }
 
+  // O placar já define os 3 obrigatórios — ao preenchê-lo, marca os toggles.
+  function aplicarPlacar(p1str: string, p2str: string) {
+    const p1 = p1str.trim() === "" ? null : Number(p1str);
+    const p2 = p2str.trim() === "" ? null : Number(p2str);
+    if (
+      p1 == null ||
+      p2 == null ||
+      !Number.isInteger(p1) ||
+      !Number.isInteger(p2) ||
+      p1 < 0 ||
+      p2 < 0
+    ) {
+      return;
+    }
+    setResultado(p1 > p2 ? "time1" : p1 < p2 ? "time2" : "empate");
+    setAmbas(p1 > 0 && p2 > 0);
+    setOver(p1 + p2 >= 3);
+  }
+
+  function handlePlacar1(v: string) {
+    setPlacar1(v);
+    aplicarPlacar(v, placar2);
+  }
+
+  function handlePlacar2(v: string) {
+    setPlacar2(v);
+    aplicarPlacar(placar1, v);
+  }
+
   return (
     <article className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--border)] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300">
       {/* Header */}
@@ -267,7 +296,7 @@ export function JogoCard({
               <PlacarInput
                 aria-label={`Gols ${jogo.sigla1}`}
                 value={placar1}
-                onChange={setPlacar1}
+                onChange={handlePlacar1}
               />
               <span className="px-1 text-lg font-extrabold text-muted-foreground">
                 x
@@ -275,9 +304,12 @@ export function JogoCard({
               <PlacarInput
                 aria-label={`Gols ${jogo.sigla2}`}
                 value={placar2}
-                onChange={setPlacar2}
+                onChange={handlePlacar2}
               />
             </Mercado>
+            <p className="-mt-2 text-center text-xs font-medium text-muted-foreground">
+              Preencheu o placar? A gente marca o resto sozinho ☝️
+            </p>
 
             {msg && !msg.ok ? (
               <p
