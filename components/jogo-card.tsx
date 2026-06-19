@@ -70,22 +70,13 @@ export function JogoCard({
   const [salvoOk, setSalvoOk] = useState(false);
   // Já palpitou? Campos travados até clicar em "Editar palpite".
   const [editando, setEditando] = useState(false);
-  const [resultado, setResultado] = useState<Resultado | null>(
-    palpite?.resultado ?? null,
-  );
-  const [ambas, setAmbas] = useState<boolean | null>(
-    palpite?.ambasMarcam ?? null,
-  );
-  const [over, setOver] = useState<boolean | null>(
-    palpite?.overDoisMeio ?? null,
-  );
   const [placar1, setPlacar1] = useState(
     palpite?.placar1 != null ? String(palpite.placar1) : "",
   );
   const [placar2, setPlacar2] = useState(
     palpite?.placar2 != null ? String(palpite.placar2) : "",
   );
-  const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   // Countdown: tick a cada segundo (sincronização externa no mount).
@@ -101,24 +92,43 @@ export function JogoCard({
     ? `Grupo ${jogo.grupo}`
     : (FASE_LABEL[jogo.fase] ?? jogo.fase);
 
-  const obrigatoriosOk = resultado != null && ambas != null && over != null;
   // Sem palpite ainda OU clicou em editar -> formulário liberado.
   const editavel = !palpite || editando;
-  // Placar completo -> os 3 mercados ficam derivados e travados.
-  const temPlacar = placar1.trim() !== "" && placar2.trim() !== "";
+
+  // Placar é obrigatório e define os 3 mercados (prévia derivada).
+  const n1 = placar1.trim() === "" ? null : Number(placar1);
+  const n2 = placar2.trim() === "" ? null : Number(placar2);
+  const placarValido =
+    n1 != null &&
+    n2 != null &&
+    Number.isInteger(n1) &&
+    Number.isInteger(n2) &&
+    n1 >= 0 &&
+    n2 >= 0 &&
+    n1 <= 99 &&
+    n2 <= 99;
+  const previa =
+    placarValido && n1 != null && n2 != null
+      ? {
+          resultado: n1 > n2 ? jogo.sigla1 : n1 < n2 ? jogo.sigla2 : "Empate",
+          ambas: n1 > 0 && n2 > 0,
+          over: n1 + n2 >= 3,
+        }
+      : null;
 
   function handleSalvar() {
     setMsg(null);
-    // Só conta o placar se os dois números estiverem preenchidos.
-    const ambosPlacar = placar1.trim() !== "" && placar2.trim() !== "";
-    const p1 = ambosPlacar ? Number(placar1) : null;
-    const p2 = ambosPlacar ? Number(placar2) : null;
+    if (!placarValido) return;
+    const p1 = Number(placar1);
+    const p2 = Number(placar2);
+    const resultado: Resultado =
+      p1 > p2 ? "time1" : p1 < p2 ? "time2" : "empate";
     startTransition(async () => {
       const res = await salvarPalpite({
         jogoId: jogo.id,
-        resultado: resultado as Resultado,
-        ambasMarcam: ambas as boolean,
-        overDoisMeio: over as boolean,
+        resultado,
+        ambasMarcam: p1 > 0 && p2 > 0,
+        overDoisMeio: p1 + p2 >= 3,
         placar1: p1,
         placar2: p2,
       });
@@ -127,49 +137,16 @@ export function JogoCard({
         setSalvoOk(true);
         setTimeout(() => setSalvoOk(false), 2200);
       } else {
-        setMsg({ ok: false, texto: res.error ?? "Erro ao salvar." });
+        setMsg(res.error ?? "Erro ao salvar.");
       }
     });
   }
 
   function handleCancelar() {
-    // Reverte aos valores salvos e tranca de novo.
-    setResultado(palpite?.resultado ?? null);
-    setAmbas(palpite?.ambasMarcam ?? null);
-    setOver(palpite?.overDoisMeio ?? null);
     setPlacar1(palpite?.placar1 != null ? String(palpite.placar1) : "");
     setPlacar2(palpite?.placar2 != null ? String(palpite.placar2) : "");
     setMsg(null);
     setEditando(false);
-  }
-
-  // O placar já define os 3 obrigatórios — ao preenchê-lo, marca os toggles.
-  function aplicarPlacar(p1str: string, p2str: string) {
-    const p1 = p1str.trim() === "" ? null : Number(p1str);
-    const p2 = p2str.trim() === "" ? null : Number(p2str);
-    if (
-      p1 == null ||
-      p2 == null ||
-      !Number.isInteger(p1) ||
-      !Number.isInteger(p2) ||
-      p1 < 0 ||
-      p2 < 0
-    ) {
-      return;
-    }
-    setResultado(p1 > p2 ? "time1" : p1 < p2 ? "time2" : "empate");
-    setAmbas(p1 > 0 && p2 > 0);
-    setOver(p1 + p2 >= 3);
-  }
-
-  function handlePlacar1(v: string) {
-    setPlacar1(v);
-    aplicarPlacar(v, placar2);
-  }
-
-  function handlePlacar2(v: string) {
-    setPlacar2(v);
-    aplicarPlacar(placar1, v);
   }
 
   return (
@@ -253,12 +230,12 @@ export function JogoCard({
           </>
         ) : (
           <>
-            {/* Placar exato em destaque — define os 3 mercados abaixo */}
-            <Mercado titulo="Cravar o placar?" peso={PESOS.placarExato} center>
+            {/* Placar exato — obrigatório, define os 3 mercados */}
+            <Mercado titulo="Qual vai ser o placar?" peso={PESOS.placarExato} center>
               <PlacarInput
                 aria-label={`Gols ${jogo.sigla1}`}
                 value={placar1}
-                onChange={handlePlacar1}
+                onChange={setPlacar1}
               />
               <span className="px-1 text-lg font-extrabold text-muted-foreground">
                 x
@@ -266,83 +243,38 @@ export function JogoCard({
               <PlacarInput
                 aria-label={`Gols ${jogo.sigla2}`}
                 value={placar2}
-                onChange={handlePlacar2}
+                onChange={setPlacar2}
               />
             </Mercado>
 
-            <p className="text-center text-xs font-bold text-muted-foreground">
-              {temPlacar
-                ? "🔒 mercados definidos pelo placar"
-                : "sem cravar o placar? escolha na mão 👇"}
-            </p>
+            {/* Prévia: mercados derivados do placar */}
+            <div className="flex flex-col gap-1 rounded-md border-2 border-border bg-muted px-3 py-2.5">
+              <p className="mb-0.5 text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">
+                Com esse placar você também palpita
+              </p>
+              <PreviaLinha
+                rotulo="Quem vence"
+                valor={previa ? previa.resultado : "—"}
+                peso={PESOS.resultado}
+              />
+              <PreviaLinha
+                rotulo="Ambas marcam"
+                valor={previa ? (previa.ambas ? "Sim" : "Não") : "—"}
+                peso={PESOS.ambasMarcam}
+              />
+              <PreviaLinha
+                rotulo="Mais de 2.5 gols"
+                valor={previa ? (previa.over ? "Sim" : "Não") : "—"}
+                peso={PESOS.overDoisMeio}
+              />
+            </div>
 
-            {/* Quem vence */}
-            <Mercado titulo="Quem vence?" peso={PESOS.resultado}>
-              <Toggle
-                ativo={resultado === "time1"}
-                travado={temPlacar}
-                onClick={() => setResultado("time1")}
-              >
-                {jogo.sigla1}
-              </Toggle>
-              <Toggle
-                ativo={resultado === "empate"}
-                travado={temPlacar}
-                onClick={() => setResultado("empate")}
-              >
-                Empate
-              </Toggle>
-              <Toggle
-                ativo={resultado === "time2"}
-                travado={temPlacar}
-                onClick={() => setResultado("time2")}
-              >
-                {jogo.sigla2}
-              </Toggle>
-            </Mercado>
-
-            {/* Ambas marcam */}
-            <Mercado titulo="Ambas marcam?" peso={PESOS.ambasMarcam}>
-              <Toggle
-                ativo={ambas === true}
-                travado={temPlacar}
-                onClick={() => setAmbas(true)}
-              >
-                Sim
-              </Toggle>
-              <Toggle
-                ativo={ambas === false}
-                travado={temPlacar}
-                onClick={() => setAmbas(false)}
-              >
-                Não
-              </Toggle>
-            </Mercado>
-
-            {/* Over 2.5 */}
-            <Mercado titulo="Mais de 2.5 gols?" peso={PESOS.overDoisMeio}>
-              <Toggle
-                ativo={over === true}
-                travado={temPlacar}
-                onClick={() => setOver(true)}
-              >
-                Sim
-              </Toggle>
-              <Toggle
-                ativo={over === false}
-                travado={temPlacar}
-                onClick={() => setOver(false)}
-              >
-                Não
-              </Toggle>
-            </Mercado>
-
-            {msg && !msg.ok ? (
+            {msg ? (
               <p
                 role="alert"
                 className="rounded-md border-2 border-border bg-destructive px-3 py-2 text-sm font-bold text-destructive-foreground"
               >
-                {msg.texto}
+                {msg}
               </p>
             ) : null}
 
@@ -360,7 +292,7 @@ export function JogoCard({
               <button
                 type="button"
                 onClick={handleSalvar}
-                disabled={!obrigatoriosOk || isPending}
+                disabled={!placarValido || isPending}
                 className="flex h-11 flex-1 items-center justify-center rounded-md border-2 border-border bg-secondary text-base font-extrabold text-secondary-foreground shadow-[3px_3px_0_0_var(--border)] transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isPending
@@ -427,34 +359,25 @@ function Mercado({
   );
 }
 
-function Toggle({
-  ativo,
-  onClick,
-  travado = false,
-  children,
+function PreviaLinha({
+  rotulo,
+  valor,
+  peso,
 }: {
-  ativo: boolean;
-  onClick: () => void;
-  travado?: boolean;
-  children: React.ReactNode;
+  rotulo: string;
+  valor: string;
+  peso: number;
 }) {
   return (
-    <button
-      type="button"
-      aria-pressed={ativo}
-      onClick={onClick}
-      disabled={travado}
-      className={cn(
-        "h-10 flex-1 rounded-md border-2 border-border text-sm font-bold transition-all",
-        ativo
-          ? "translate-x-[2px] translate-y-[2px] bg-main text-main-foreground shadow-none"
-          : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
-        travado && "pointer-events-none",
-        travado && !ativo && "opacity-40",
-      )}
-    >
-      {children}
-    </button>
+    <div className="flex items-center justify-between gap-2 text-sm font-bold">
+      <span className="text-muted-foreground">{rotulo}</span>
+      <span className="flex items-center gap-2">
+        <span className="text-foreground">{valor}</span>
+        <span className="rounded border-2 border-border bg-accent px-1.5 py-0.5 text-xs font-extrabold text-accent-foreground">
+          {`+${peso}`}
+        </span>
+      </span>
+    </div>
   );
 }
 
