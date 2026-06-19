@@ -104,11 +104,15 @@ export function JogoCard({
   const obrigatoriosOk = resultado != null && ambas != null && over != null;
   // Sem palpite ainda OU clicou em editar -> formulário liberado.
   const editavel = !palpite || editando;
+  // Placar completo -> os 3 mercados ficam derivados e travados.
+  const temPlacar = placar1.trim() !== "" && placar2.trim() !== "";
 
   function handleSalvar() {
     setMsg(null);
-    const p1 = placar1.trim() === "" ? null : Number(placar1);
-    const p2 = placar2.trim() === "" ? null : Number(placar2);
+    // Só conta o placar se os dois números estiverem preenchidos.
+    const ambosPlacar = placar1.trim() !== "" && placar2.trim() !== "";
+    const p1 = ambosPlacar ? Number(placar1) : null;
+    const p2 = ambosPlacar ? Number(placar2) : null;
     startTransition(async () => {
       const res = await salvarPalpite({
         jogoId: jogo.id,
@@ -249,50 +253,8 @@ export function JogoCard({
           </>
         ) : (
           <>
-            {/* Resultado */}
-            <Mercado titulo="Quem vence?" peso={PESOS.resultado}>
-              <Toggle
-                ativo={resultado === "time1"}
-                onClick={() => setResultado("time1")}
-              >
-                {jogo.sigla1}
-              </Toggle>
-              <Toggle
-                ativo={resultado === "empate"}
-                onClick={() => setResultado("empate")}
-              >
-                Empate
-              </Toggle>
-              <Toggle
-                ativo={resultado === "time2"}
-                onClick={() => setResultado("time2")}
-              >
-                {jogo.sigla2}
-              </Toggle>
-            </Mercado>
-
-            {/* Ambas marcam */}
-            <Mercado titulo="Ambas marcam?" peso={PESOS.ambasMarcam}>
-              <Toggle ativo={ambas === true} onClick={() => setAmbas(true)}>
-                Sim
-              </Toggle>
-              <Toggle ativo={ambas === false} onClick={() => setAmbas(false)}>
-                Não
-              </Toggle>
-            </Mercado>
-
-            {/* Over 2.5 */}
-            <Mercado titulo="Mais de 2.5 gols?" peso={PESOS.overDoisMeio}>
-              <Toggle ativo={over === true} onClick={() => setOver(true)}>
-                Sim
-              </Toggle>
-              <Toggle ativo={over === false} onClick={() => setOver(false)}>
-                Não
-              </Toggle>
-            </Mercado>
-
-            {/* Placar exato */}
-            <Mercado titulo="Placar exato" peso={PESOS.placarExato} center>
+            {/* Placar exato em destaque — define os 3 mercados abaixo */}
+            <Mercado titulo="Cravar o placar?" peso={PESOS.placarExato} center>
               <PlacarInput
                 aria-label={`Gols ${jogo.sigla1}`}
                 value={placar1}
@@ -307,9 +269,73 @@ export function JogoCard({
                 onChange={handlePlacar2}
               />
             </Mercado>
-            <p className="-mt-2 text-center text-xs font-medium text-muted-foreground">
-              Preencheu o placar? A gente marca o resto sozinho ☝️
+
+            <p className="text-center text-xs font-bold text-muted-foreground">
+              {temPlacar
+                ? "🔒 mercados definidos pelo placar"
+                : "sem cravar o placar? escolha na mão 👇"}
             </p>
+
+            {/* Quem vence */}
+            <Mercado titulo="Quem vence?" peso={PESOS.resultado}>
+              <Toggle
+                ativo={resultado === "time1"}
+                travado={temPlacar}
+                onClick={() => setResultado("time1")}
+              >
+                {jogo.sigla1}
+              </Toggle>
+              <Toggle
+                ativo={resultado === "empate"}
+                travado={temPlacar}
+                onClick={() => setResultado("empate")}
+              >
+                Empate
+              </Toggle>
+              <Toggle
+                ativo={resultado === "time2"}
+                travado={temPlacar}
+                onClick={() => setResultado("time2")}
+              >
+                {jogo.sigla2}
+              </Toggle>
+            </Mercado>
+
+            {/* Ambas marcam */}
+            <Mercado titulo="Ambas marcam?" peso={PESOS.ambasMarcam}>
+              <Toggle
+                ativo={ambas === true}
+                travado={temPlacar}
+                onClick={() => setAmbas(true)}
+              >
+                Sim
+              </Toggle>
+              <Toggle
+                ativo={ambas === false}
+                travado={temPlacar}
+                onClick={() => setAmbas(false)}
+              >
+                Não
+              </Toggle>
+            </Mercado>
+
+            {/* Over 2.5 */}
+            <Mercado titulo="Mais de 2.5 gols?" peso={PESOS.overDoisMeio}>
+              <Toggle
+                ativo={over === true}
+                travado={temPlacar}
+                onClick={() => setOver(true)}
+              >
+                Sim
+              </Toggle>
+              <Toggle
+                ativo={over === false}
+                travado={temPlacar}
+                onClick={() => setOver(false)}
+              >
+                Não
+              </Toggle>
+            </Mercado>
 
             {msg && !msg.ok ? (
               <p
@@ -404,10 +430,12 @@ function Mercado({
 function Toggle({
   ativo,
   onClick,
+  travado = false,
   children,
 }: {
   ativo: boolean;
   onClick: () => void;
+  travado?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -415,11 +443,14 @@ function Toggle({
       type="button"
       aria-pressed={ativo}
       onClick={onClick}
+      disabled={travado}
       className={cn(
         "h-10 flex-1 rounded-md border-2 border-border text-sm font-bold transition-all",
         ativo
           ? "translate-x-[2px] translate-y-[2px] bg-main text-main-foreground shadow-none"
           : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+        travado && "pointer-events-none",
+        travado && !ativo && "opacity-40",
       )}
     >
       {children}
