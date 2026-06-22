@@ -18,9 +18,11 @@ const TABS = [
 export function AppShell({
   children,
   aside,
+  wide = false,
 }: {
   children: ReactNode;
   aside?: ReactNode;
+  wide?: boolean;
 }) {
   const path = usePathname();
   const ativo = (href: string) => path === href || path.startsWith(href + "/");
@@ -86,7 +88,11 @@ export function AppShell({
 
       {/* Conteúdo — único elemento que rola */}
       <main className="flex-1 overflow-y-auto overscroll-contain">
-        {aside ? (
+        {wide ? (
+          <div className="mx-auto w-full max-w-[1120px] px-4 pb-6 lg:px-6">
+            {children}
+          </div>
+        ) : aside ? (
           <div className="mx-auto grid w-full max-w-[980px] grid-cols-1 gap-6 px-4 pb-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-6">
             <div className="mx-auto w-full max-w-[460px] lg:max-w-none">
               {children}

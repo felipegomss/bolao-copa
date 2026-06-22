@@ -3,13 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { agendarApuracao } from "@/lib/apuracao";
 import { chaveData, chaveHoje, rotuloData, horaBR, agoraMs } from "@/lib/datas";
 import { calcularRanking } from "@/lib/ranking";
-import { JogoCard, type PalpiteData } from "@/components/jogo-card";
 import { AppShell } from "@/components/app-shell";
-import { TabelaRanking } from "@/components/tabela-ranking";
-import { ComoPontua } from "@/components/como-pontua";
-import type { Resultado } from "@/lib/pontuacao";
+import { Bilhete, type JogoBilhete } from "@/components/bilhete";
 
 export const dynamic = "force-dynamic";
+
+const FASE_LABEL: Record<string, string> = {
+  grupos: "Fase de grupos",
+  "16avos": "16-avos de final",
+  "8avos": "Oitavas de final",
+  quartas: "Quartas de final",
+  semis: "Semifinal",
+  "3lugar": "Disputa de 3º lugar",
+  final: "Final",
+};
 
 export default async function JogosPage() {
   agendarApuracao();
@@ -22,110 +29,62 @@ export default async function JogosPage() {
     calcularRanking(),
   ]);
 
-  const palpitePorJogo = new Map<string, PalpiteData>();
+  const palpitesSalvos: Record<string, { placar1: number; placar2: number }> =
+    {};
   for (const p of palpitesRaw) {
-    palpitePorJogo.set(p.jogoId, {
-      resultado: p.resultado as Resultado,
-      ambasMarcam: p.ambasMarcam,
-      overDoisMeio: p.overDoisMeio,
-      placar1: p.placar1,
-      placar2: p.placar2,
-    });
+    if (p.placar1 != null && p.placar2 != null) {
+      palpitesSalvos[p.jogoId] = { placar1: p.placar1, placar2: p.placar2 };
+    }
   }
 
   const hoje = chaveHoje();
   const agora = agoraMs();
 
-  // Só jogos que valem pontos (a partir do corte) e de hoje em diante.
-  // Jogos pré-corte não são palpitáveis — aparecem no histórico.
+  // Só jogos que valem pontos e ainda não começaram (dá pra palpitar).
   const jogos = jogosRaw.filter(
-    (j) => j.valePontos && chaveData(j.kickoff) >= hoje,
+    (j) => j.valePontos && j.kickoff.getTime() > agora,
   );
 
-  // Agrupa por dia.
-  const grupos = new Map<string, typeof jogos>();
-  for (const j of jogos) {
-    const k = chaveData(j.kickoff);
-    const arr = grupos.get(k);
-    if (arr) arr.push(j);
-    else grupos.set(k, [j]);
-  }
-
-  // Jogos de HOJE que valem e ainda dá pra palpitar.
-  const jogosHojeAbertos = jogos.filter(
-    (j) => chaveData(j.kickoff) === hoje && j.kickoff.getTime() > agora,
-  );
-  const faltamHoje = jogosHojeAbertos.filter(
-    (j) => !palpitePorJogo.has(j.id),
-  ).length;
-  const temJogoHoje = jogosHojeAbertos.length > 0;
-
-  // O próximo jogo que ainda dá pra palpitar (mais cedo, já que está ordenado).
-  const proximoId = jogos.find((j) => j.kickoff.getTime() > agora)?.id;
+  const jogosBilhete: JogoBilhete[] = jogos.map((j) => ({
+    id: j.id,
+    grupo: j.grupo,
+    faseLabel: FASE_LABEL[j.fase] ?? j.fase,
+    kickoffMs: j.kickoff.getTime(),
+    hora: horaBR(j.kickoff),
+    dataKey: chaveData(j.kickoff),
+    dataLabel: rotuloData(j.kickoff),
+    time1: j.time1,
+    time2: j.time2,
+    sigla1: j.sigla1,
+    sigla2: j.sigla2,
+  }));
 
   return (
-    <AppShell aside={<TabelaRanking ranking={ranking} jogadorId={jogadorId} />}>
-      <div className="flex flex-col gap-5 py-5">
-      <header>
-        <h1 className="text-2xl font-extrabold text-foreground">Jogos</h1>
-        <p className="text-sm font-medium text-muted-foreground">
-          E aí, {session?.user?.name}!
-        </p>
-      </header>
-
-      <div
-        className={
-          faltamHoje > 0
-            ? "rounded-[var(--radius-base)] border-[2.5px] border-border bg-accent px-4 py-3 text-sm font-extrabold text-accent-foreground shadow-[4px_4px_0_0_var(--border)]"
-            : "rounded-[var(--radius-base)] border-[2.5px] border-border bg-brand-green-dark px-4 py-3 text-sm font-extrabold text-white shadow-[4px_4px_0_0_var(--border)]"
-        }
-      >
-        {!temJogoHoje
-          ? "Sem jogo valendo hoje. Já deixa os próximos palpitados! 👀"
-          : faltamHoje > 0
-            ? `Faltam ${faltamHoje} ${faltamHoje === 1 ? "jogo" : "jogos"} pra palpitar hoje!`
-            : "Tudo palpitado por hoje. 👊"}
-      </div>
-
-      {jogos.length === 0 ? (
-        <p className="rounded-[var(--radius-base)] border-2 border-dashed border-border bg-muted px-4 py-8 text-center text-sm font-bold text-muted-foreground">
-          Nenhum jogo por vir. Confira o histórico e a tabela.
-        </p>
-      ) : (
-        [...grupos.entries()].map(([k, jogosDoDia]) => (
-          <section key={k} className="flex flex-col gap-3">
-            <h2 className="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b-2 border-border bg-background px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide text-foreground">
-              {rotuloData(jogosDoDia[0].kickoff)}
-              {k === hoje ? (
-                <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-extrabold text-secondary-foreground">
-                  hoje
-                </span>
-              ) : null}
-            </h2>
-            {jogosDoDia.map((j) => (
-              <JogoCard
-                key={j.id}
-                serverNowMs={agora}
-                proximo={j.id === proximoId}
-                jogo={{
-                  id: j.id,
-                  fase: j.fase,
-                  grupo: j.grupo,
-                  kickoffMs: j.kickoff.getTime(),
-                  hora: horaBR(j.kickoff),
-                  time1: j.time1,
-                  time2: j.time2,
-                  sigla1: j.sigla1,
-                  sigla2: j.sigla2,
-                }}
-                palpite={palpitePorJogo.get(j.id) ?? null}
-              />
-            ))}
-          </section>
-        ))
-      )}
-
-      <ComoPontua />
+    <AppShell wide>
+      <div className="py-5">
+        {jogos.length === 0 ? (
+          <>
+            <header className="mb-5">
+              <h1 className="text-2xl font-extrabold text-foreground">Jogos</h1>
+              <p className="text-sm font-medium text-muted-foreground">
+                E aí, {session?.user?.name}!
+              </p>
+            </header>
+            <p className="rounded-[var(--radius-base)] border-2 border-dashed border-border bg-muted px-4 py-8 text-center text-sm font-bold text-muted-foreground">
+              Nenhum jogo por vir. Confira o histórico e a tabela.
+            </p>
+          </>
+        ) : (
+          <Bilhete
+            jogos={jogosBilhete}
+            palpitesSalvos={palpitesSalvos}
+            ranking={ranking}
+            jogadorId={jogadorId}
+            serverNowMs={agora}
+            hoje={hoje}
+            nome={session?.user?.name ?? ""}
+          />
+        )}
       </div>
     </AppShell>
   );
