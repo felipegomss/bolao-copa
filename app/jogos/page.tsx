@@ -40,9 +40,11 @@ export default async function JogosPage() {
   const hoje = chaveHoje();
   const agora = agoraMs();
 
-  // Só jogos que valem pontos e ainda não começaram (dá pra palpitar).
+  // Jogos que valem pontos e ainda NÃO têm resultado (futuros + em andamento).
+  // Os já encerrados saem da home e vão pro histórico. Os que começaram mas
+  // não terminaram ficam na lista (travados, sem dá pra palpitar).
   const jogos = jogosRaw.filter(
-    (j) => j.valePontos && j.kickoff.getTime() > agora,
+    (j) => j.valePontos && (j.gols1 == null || j.gols2 == null),
   );
 
   const jogosBilhete: JogoBilhete[] = jogos.map((j) => ({
