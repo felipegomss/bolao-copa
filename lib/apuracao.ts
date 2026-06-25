@@ -9,12 +9,14 @@ import {
   type ApiMatch,
 } from "@/lib/football-data";
 
-// Tempo mínimo entre apurações on-access (respeita o rate limit do free tier).
-const INTERVALO_MS = 90_000;
+// Intervalos entre sincronizações on-access (respeita o rate limit do free tier).
+const INTERVALO_VIVO = 90_000; // 1,5 min quando há jogo rolando
+const INTERVALO_OCIOSO = 30 * 60_000; // 30 min sem jogo (só refresca calendário)
 
 export type ApuracaoResultado = {
   externalId: string;
   status: string;
+  mudou: boolean;
   palpitesAtualizados: number;
   pulado?: string;
 };
@@ -33,35 +35,59 @@ export async function processarMatch(
     return {
       externalId: dados.externalId,
       status: dados.status,
+      mudou: false,
       palpitesAtualizados: 0,
       pulado: "jogo não está no banco",
     };
   }
 
-  // Atualiza dados do jogo (não mexe em valePontos, definido no seed).
-  await prisma.jogo.update({
-    where: { id: jogo.id },
-    data: {
-      kickoff: dados.kickoff,
-      fase: dados.fase,
-      grupo: dados.grupo,
-      time1: dados.time1,
-      time2: dados.time2,
-      sigla1: dados.sigla1,
-      sigla2: dados.sigla2,
-      status: dados.status,
-      gols1: dados.gols1,
-      gols2: dados.gols2,
-    },
-  });
+  // Só escreve se o calendário/placar realmente mudou (evita writes à toa
+  // no sync periódico). Pega o mata-mata quando a fonte define os times.
+  const mudou =
+    jogo.kickoff.getTime() !== dados.kickoff.getTime() ||
+    jogo.fase !== dados.fase ||
+    jogo.grupo !== dados.grupo ||
+    jogo.time1 !== dados.time1 ||
+    jogo.time2 !== dados.time2 ||
+    jogo.sigla1 !== dados.sigla1 ||
+    jogo.sigla2 !== dados.sigla2 ||
+    jogo.status !== dados.status ||
+    jogo.gols1 !== dados.gols1 ||
+    jogo.gols2 !== dados.gols2;
 
-  // Só apura jogo encerrado com placar.
-  if (dados.status !== "encerrado" || dados.gols1 == null || dados.gols2 == null) {
+  if (mudou) {
+    await prisma.jogo.update({
+      where: { id: jogo.id },
+      data: {
+        kickoff: dados.kickoff,
+        fase: dados.fase,
+        grupo: dados.grupo,
+        time1: dados.time1,
+        time2: dados.time2,
+        sigla1: dados.sigla1,
+        sigla2: dados.sigla2,
+        status: dados.status,
+        gols1: dados.gols1,
+        gols2: dados.gols2,
+      },
+    });
+  }
+
+  // Apura só quando encerrado, com placar, e o placar mudou (recém-finalizado
+  // ou corrigido) — assim não reescreve os pontos a cada sync.
+  const golsMudou = jogo.gols1 !== dados.gols1 || jogo.gols2 !== dados.gols2;
+  if (
+    dados.status !== "encerrado" ||
+    dados.gols1 == null ||
+    dados.gols2 == null ||
+    !golsMudou
+  ) {
     return {
       externalId: dados.externalId,
       status: dados.status,
+      mudou,
       palpitesAtualizados: 0,
-      pulado: "ainda não encerrado",
+      pulado: "sem apuração",
     };
   }
 
@@ -87,13 +113,14 @@ export async function processarMatch(
   return {
     externalId: dados.externalId,
     status: dados.status,
+    mudou: true,
     palpitesAtualizados: palpites.length,
   };
 }
 
-// Apura todos os jogos finalizados, mas só se: (a) houver jogo que já começou
-// e ainda não foi encerrado, e (b) passou do INTERVALO desde a última apuração.
-// Nunca lança — é chamada em background (after()).
+// Sincroniza com a API: atualiza o calendário (times/horário/status — pega o
+// mata-mata quando a fonte define) e apura os finalizados. Throttle dinâmico:
+// rápido com jogo rolando, lento (30 min) ocioso. Nunca lança (roda em after()).
 export async function apurarSeNecessario(): Promise<void> {
   try {
     const token = process.env.FOOTBALL_DATA_TOKEN;
@@ -101,21 +128,18 @@ export async function apurarSeNecessario(): Promise<void> {
 
     const agora = new Date();
 
-    // (a) tem algo pra apurar? jogo que começou mas não está encerrado.
-    const pendente = await prisma.jogo.findFirst({
+    // Tem jogo rolando (começou e não encerrou)? -> sincroniza mais rápido.
+    const jogoVivo = await prisma.jogo.findFirst({
       where: { status: { not: "encerrado" }, kickoff: { lt: agora } },
       select: { id: true },
     });
-    if (!pendente) return;
+    const intervalo = jogoVivo ? INTERVALO_VIVO : INTERVALO_OCIOSO;
 
-    // (b) throttle entre instâncias serverless.
+    // Throttle entre instâncias serverless.
     const estado = await prisma.estadoApuracao.findUnique({
       where: { id: "singleton" },
     });
-    if (
-      estado &&
-      agora.getTime() - estado.rodadaEm.getTime() < INTERVALO_MS
-    ) {
+    if (estado && agora.getTime() - estado.rodadaEm.getTime() < intervalo) {
       return;
     }
 
@@ -126,9 +150,8 @@ export async function apurarSeNecessario(): Promise<void> {
       update: { rodadaEm: agora },
     });
 
-    const matches = (await fetchWorldCupMatches(token)).filter(
-      (m) => m.status === "FINISHED",
-    );
+    // Processa TODOS os jogos (o processarMatch só escreve o que mudou).
+    const matches = await fetchWorldCupMatches(token);
     for (const m of matches) {
       await processarMatch(m);
     }

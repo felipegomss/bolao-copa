@@ -43,24 +43,24 @@ export async function GET(req: Request) {
       // Força a atualização de um jogo específico (feed atrasado etc.).
       matches = [await fetchMatchById(token, forcarExternalId)];
     } else {
-      const todos = await fetchWorldCupMatches(token);
-      matches = todos.filter((m) => m.status === "FINISHED");
+      // Sync completo: atualiza calendário (mata-mata etc.) e apura finalizados.
+      matches = await fetchWorldCupMatches(token);
     }
 
-    const detalhes = [];
     let palpitesAtualizados = 0;
+    let jogosAtualizados = 0;
     for (const m of matches) {
       const r = await processarMatch(m);
       palpitesAtualizados += r.palpitesAtualizados;
-      detalhes.push(r);
+      if (r.mudou) jogosAtualizados++;
     }
 
     return NextResponse.json({
       ok: true,
-      modo: forcarExternalId ? "forcado" : "todos-finalizados",
+      modo: forcarExternalId ? "forcado" : "sync-completo",
       jogosProcessados: matches.length,
+      jogosAtualizados,
       palpitesAtualizados,
-      detalhes,
     });
   } catch (e) {
     return NextResponse.json(
