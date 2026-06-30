@@ -41,10 +41,10 @@ export function ComoPontua({ defaultOpen = false }: { defaultOpen?: boolean }) {
           nunca negativo (pode chutar o placar à vontade). O{" "}
           <strong className="text-foreground">bônus jogo cheio</strong> sai quando
           você acerta os 3 obrigatórios no mesmo jogo: quem vence + ambas marcam +
-          mais de 2.5. No mata-mata, se você previr{" "}
-          <strong className="text-foreground">empate</strong> e acertar{" "}
-          <strong className="text-foreground">quem classifica</strong> (nos
-          pênaltis), ganha +{PESOS.bonusClassificacao}.
+          mais de 2.5. No mata-mata, acertar{" "}
+          <strong className="text-foreground">quem classifica</strong> dá +
+          {PESOS.bonusClassificacao}: se previr a vitória, é o time que você
+          apontou; se previr empate, você marca quem passa nos pênaltis.
         </p>
       </div>
     </details>

@@ -66,13 +66,17 @@ export function calcularPontos(
     p.placar2 === gols2;
   const jogoCheio = acertouResultado && acertouAmbas && acertouOver;
 
-  // Bônus de classificação: mata-mata que deu empate na bola rolando (foi pra
-  // pênaltis), o jogador previu empate e acertou quem avançou.
+  // Bônus de classificação (mata-mata): acertar quem avança.
+  // Se previu vitória, o classificado é o time que ele apontou pra vencer.
+  // Se previu empate, é a escolha manual de quem passa nos pênaltis.
+  const classificadoPalpitado: Lado | null =
+    p.resultado === "time1"
+      ? "time1"
+      : p.resultado === "time2"
+        ? "time2"
+        : (p.classificado ?? null);
   const acertouClassificacao =
-    classificadoReal != null &&
-    real === "empate" &&
-    p.resultado === "empate" &&
-    p.classificado === classificadoReal;
+    classificadoReal != null && classificadoPalpitado === classificadoReal;
 
   const resultado = acertouResultado ? PESOS.resultado : 0;
   const ambasMarcam = acertouAmbas ? PESOS.ambasMarcam : 0;
