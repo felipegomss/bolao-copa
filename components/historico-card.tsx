@@ -63,6 +63,27 @@ export function HistoricoCard({
   const resultadoRealLabel =
     real === "time1" ? jogo.sigla1 : real === "time2" ? jogo.sigla2 : "Empate";
 
+  // Mata-mata decidido: tem "quem classifica".
+  const ehMataMata = jogo.classificado != null;
+  const classifRealSigla =
+    jogo.classificado === "time1"
+      ? jogo.sigla1
+      : jogo.classificado === "time2"
+        ? jogo.sigla2
+        : null;
+  const ladoPalpitado =
+    palpite?.resultado === "time1"
+      ? "time1"
+      : palpite?.resultado === "time2"
+        ? "time2"
+        : (palpite?.classificado ?? null);
+  const classifPalpitadoSigla =
+    ladoPalpitado === "time1"
+      ? jogo.sigla1
+      : ladoPalpitado === "time2"
+        ? jogo.sigla2
+        : "—";
+
   return (
     <article className="overflow-hidden rounded-[var(--radius-base)] border-[2.5px] border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
       <header className="flex items-center justify-between gap-2 border-b-[2.5px] border-border bg-foreground px-4 py-2 text-background">
@@ -133,12 +154,10 @@ export function HistoricoCard({
                 pts={detalhe.placarExato}
               />
             ) : null}
-            {palpite.classificado ? (
+            {ehMataMata ? (
               <Mercado
                 rotulo="Quem classifica"
-                palpite={
-                  palpite.classificado === "time1" ? jogo.sigla1 : jogo.sigla2
-                }
+                palpite={classifPalpitadoSigla}
                 certo={detalhe.acertouClassificacao}
                 pts={detalhe.classificacao}
               />
@@ -158,7 +177,9 @@ export function HistoricoCard({
 
         {/* Resultado real resumido pra contexto */}
         <p className="text-center text-xs font-bold text-muted-foreground">
-          Deu: {resultadoRealLabel}
+          {ehMataMata && real === "empate"
+            ? `Deu: empate · ${classifRealSigla} classificou nos pênaltis`
+            : `Deu: ${resultadoRealLabel}`}
         </p>
       </div>
     </article>
