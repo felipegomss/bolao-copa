@@ -70,6 +70,7 @@ export async function fetchOpenfootballMatches(): Promise<JogoSeed[]> {
       status: finished ? "encerrado" : "agendado",
       gols1: finished ? m.score!.ft![0] : null,
       gols2: finished ? m.score!.ft![1] : null,
+      classificado: null, // fallback não tem dado de quem classificou
       matchday,
     };
   });

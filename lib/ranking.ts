@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { calcularPontos, type Resultado } from "@/lib/pontuacao";
+import { calcularPontos, type Resultado, type Lado } from "@/lib/pontuacao";
 
 export type LinhaRanking = {
   jogadorId: string;
@@ -56,9 +56,11 @@ export async function calcularRanking(): Promise<LinhaRanking[]> {
         overDoisMeio: p.overDoisMeio,
         placar1: p.placar1,
         placar2: p.placar2,
+        classificado: p.classificado as Lado | null,
       },
       jogo.gols1,
       jogo.gols2,
+      jogo.classificado as Lado | null,
     );
 
     linha.pontos += d.total;

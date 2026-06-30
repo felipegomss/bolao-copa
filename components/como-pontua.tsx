@@ -8,14 +8,8 @@ const MERCADOS = [
   { nome: "Mais de 2.5 gols", pts: PESOS.overDoisMeio },
   { nome: "Placar exato", pts: PESOS.placarExato },
   { nome: "🔥 Bônus jogo cheio", pts: PESOS.bonusJogoCheio },
+  { nome: "🏆 Quem classifica (mata-mata)", pts: PESOS.bonusClassificacao },
 ];
-
-const MAX =
-  PESOS.resultado +
-  PESOS.ambasMarcam +
-  PESOS.overDoisMeio +
-  PESOS.placarExato +
-  PESOS.bonusJogoCheio;
 
 export function ComoPontua({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
@@ -47,8 +41,10 @@ export function ComoPontua({ defaultOpen = false }: { defaultOpen?: boolean }) {
           nunca negativo (pode chutar o placar à vontade). O{" "}
           <strong className="text-foreground">bônus jogo cheio</strong> sai quando
           você acerta os 3 obrigatórios no mesmo jogo: quem vence + ambas marcam +
-          mais de 2.5. Máximo de{" "}
-          <strong className="text-foreground">{MAX} pontos</strong> por jogo.
+          mais de 2.5. No mata-mata, se você previr{" "}
+          <strong className="text-foreground">empate</strong> e acertar{" "}
+          <strong className="text-foreground">quem classifica</strong> (nos
+          pênaltis), ganha +{PESOS.bonusClassificacao}.
         </p>
       </div>
     </details>

@@ -6,6 +6,7 @@ import {
   calcularPontos,
   resultadoReal,
   type Resultado,
+  type Lado,
 } from "@/lib/pontuacao";
 
 export type HistoricoJogo = {
@@ -19,6 +20,7 @@ export type HistoricoJogo = {
   sigla2: string;
   gols1: number;
   gols2: number;
+  classificado: Lado | null;
   valePontos: boolean;
 };
 
@@ -28,6 +30,7 @@ export type HistoricoPalpite = {
   overDoisMeio: boolean;
   placar1: number | null;
   placar2: number | null;
+  classificado: Lado | null;
 } | null;
 
 const FASE_LABEL: Record<string, string> = {
@@ -54,7 +57,7 @@ export function HistoricoCard({
   const real = resultadoReal(jogo.gols1, jogo.gols2);
   const detalhe =
     palpite && jogo.valePontos
-      ? calcularPontos(palpite, jogo.gols1, jogo.gols2)
+      ? calcularPontos(palpite, jogo.gols1, jogo.gols2, jogo.classificado)
       : null;
 
   const resultadoRealLabel =
@@ -128,6 +131,16 @@ export function HistoricoCard({
                 palpite={`${palpite.placar1} x ${palpite.placar2}`}
                 certo={detalhe.acertouPlacar}
                 pts={detalhe.placarExato}
+              />
+            ) : null}
+            {palpite.classificado ? (
+              <Mercado
+                rotulo="Quem classifica"
+                palpite={
+                  palpite.classificado === "time1" ? jogo.sigla1 : jogo.sigla2
+                }
+                certo={detalhe.acertouClassificacao}
+                pts={detalhe.classificacao}
               />
             ) : null}
             {detalhe.jogoCheio ? (

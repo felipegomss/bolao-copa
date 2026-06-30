@@ -2,7 +2,7 @@ import { after } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { calcularPontos } from "@/lib/pontuacao";
-import type { Resultado } from "@/lib/pontuacao";
+import type { Resultado, Lado } from "@/lib/pontuacao";
 import {
   fetchWorldCupMatches,
   mapApiMatchToJogo,
@@ -53,7 +53,8 @@ export async function processarMatch(
     jogo.sigla2 !== dados.sigla2 ||
     jogo.status !== dados.status ||
     jogo.gols1 !== dados.gols1 ||
-    jogo.gols2 !== dados.gols2;
+    jogo.gols2 !== dados.gols2 ||
+    jogo.classificado !== dados.classificado;
 
   if (mudou) {
     await prisma.jogo.update({
@@ -69,18 +70,20 @@ export async function processarMatch(
         status: dados.status,
         gols1: dados.gols1,
         gols2: dados.gols2,
+        classificado: dados.classificado,
       },
     });
   }
 
-  // Apura só quando encerrado, com placar, e o placar mudou (recém-finalizado
-  // ou corrigido) — assim não reescreve os pontos a cada sync.
+  // Apura só quando encerrado, com placar, e algo relevante mudou (placar ou
+  // quem classificou) — assim não reescreve os pontos a cada sync.
   const golsMudou = jogo.gols1 !== dados.gols1 || jogo.gols2 !== dados.gols2;
+  const classifMudou = jogo.classificado !== dados.classificado;
   if (
     dados.status !== "encerrado" ||
     dados.gols1 == null ||
     dados.gols2 == null ||
-    !golsMudou
+    !(golsMudou || classifMudou)
   ) {
     return {
       externalId: dados.externalId,
@@ -102,9 +105,11 @@ export async function processarMatch(
             overDoisMeio: p.overDoisMeio,
             placar1: p.placar1,
             placar2: p.placar2,
+            classificado: p.classificado as Lado | null,
           },
           dados.gols1,
           dados.gols2,
+          dados.classificado,
         ).total
       : null;
     await prisma.palpite.update({ where: { id: p.id }, data: { pontos } });

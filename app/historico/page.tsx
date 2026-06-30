@@ -8,7 +8,7 @@ import {
   type HistoricoPalpite,
 } from "@/components/historico-card";
 import { AppShell } from "@/components/app-shell";
-import type { Resultado } from "@/lib/pontuacao";
+import type { Resultado, Lado } from "@/lib/pontuacao";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,7 @@ export default async function HistoricoPage() {
       overDoisMeio: p.overDoisMeio,
       placar1: p.placar1,
       placar2: p.placar2,
+      classificado: (p.classificado as Lado | null) ?? null,
     });
   }
 
@@ -71,6 +72,7 @@ export default async function HistoricoPage() {
                 sigla2: j.sigla2,
                 gols1: j.gols1!,
                 gols2: j.gols2!,
+                classificado: (j.classificado as Lado | null) ?? null,
                 valePontos: j.valePontos,
               }}
               palpite={palpitePorJogo.get(j.id) ?? null}

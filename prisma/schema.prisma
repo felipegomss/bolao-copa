@@ -31,8 +31,9 @@ model Jogo {
   sigla2      String // ex "SCO"
   estadio     String?
   status      String    @default("agendado") // "agendado" | "encerrado"
-  gols1       Int?
+  gols1       Int? // placar de bola rolando (regular + prorrogação), sem pênaltis
   gols2       Int?
+  classificado String?  // "time1" | "time2" — quem avançou no mata-mata (null = grupos / sem decisão)
   valePontos  Boolean   @default(true) // false pros jogos antes do corte
   palpites    Palpite[]
 }
@@ -54,6 +55,7 @@ model Palpite {
   overDoisMeio Boolean
   placar1      Int?
   placar2      Int?
+  classificado String? // "time1" | "time2" — quem o jogador acha que avança (palpite de empate no mata-mata)
   pontos       Int? // calculado após o jogo encerrar
   criadoEm     DateTime @default(now())
 

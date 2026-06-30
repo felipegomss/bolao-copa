@@ -18,7 +18,14 @@ export type ApiMatch = {
   group: string | null; // "GROUP_A" ...
   homeTeam: ApiTeam;
   awayTeam: ApiTeam;
-  score: { fullTime: { home: number | null; away: number | null } };
+  score: {
+    winner: string | null; // HOME_TEAM | AWAY_TEAM | DRAW | null
+    duration?: string; // REGULAR | EXTRA_TIME | PENALTY_SHOOTOUT
+    fullTime: { home: number | null; away: number | null };
+    regularTime?: { home: number | null; away: number | null } | null;
+    extraTime?: { home: number | null; away: number | null } | null;
+    penalties?: { home: number | null; away: number | null } | null;
+  };
 };
 
 // Representação interna, pronta pra gravar em Jogo (sem o valePontos,
@@ -36,6 +43,7 @@ export type JogoSeed = {
   status: "agendado" | "encerrado";
   gols1: number | null;
   gols2: number | null;
+  classificado: "time1" | "time2" | null; // quem avançou (mata-mata)
   matchday: number | null; // transiente: só pra derivar o corte; não vai pro banco
 };
 
@@ -69,8 +77,30 @@ function siglaFallback(name: string | null): string {
   return name.replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase() || "?";
 }
 
+// Placar de BOLA ROLANDO (sem pênaltis). Se o jogo foi pra prorrogação/pênaltis,
+// a API traz regularTime + extraTime separados; o fullTime soma os pênaltis.
+function golsBolaRolando(m: ApiMatch): { home: number | null; away: number | null } {
+  const s = m.score;
+  if (s.regularTime && s.regularTime.home != null && s.regularTime.away != null) {
+    return {
+      home: s.regularTime.home + (s.extraTime?.home ?? 0),
+      away: s.regularTime.away + (s.extraTime?.away ?? 0),
+    };
+  }
+  return { home: s.fullTime.home, away: s.fullTime.away };
+}
+
+// Quem avançou no mata-mata, a partir do winner da API.
+function classificadoDoMatch(m: ApiMatch): "time1" | "time2" | null {
+  if (m.stage === "GROUP_STAGE") return null; // grupos não tem "classificado"
+  if (m.score.winner === "HOME_TEAM") return "time1";
+  if (m.score.winner === "AWAY_TEAM") return "time2";
+  return null;
+}
+
 export function mapApiMatchToJogo(m: ApiMatch): JogoSeed {
   const finished = m.status === "FINISHED";
+  const gols = finished ? golsBolaRolando(m) : { home: null, away: null };
   return {
     externalId: String(m.id),
     kickoff: new Date(m.utcDate),
@@ -83,8 +113,9 @@ export function mapApiMatchToJogo(m: ApiMatch): JogoSeed {
     sigla2: m.awayTeam.tla ?? siglaFallback(m.awayTeam.name),
     estadio: null, // free tier não traz o estádio
     status: statusFromApi(m.status),
-    gols1: finished ? m.score.fullTime.home : null,
-    gols2: finished ? m.score.fullTime.away : null,
+    gols1: gols.home,
+    gols2: gols.away,
+    classificado: finished ? classificadoDoMatch(m) : null,
     matchday: m.matchday,
   };
 }

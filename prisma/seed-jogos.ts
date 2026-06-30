@@ -68,6 +68,7 @@ async function main() {
       status: j.status,
       gols1: j.gols1,
       gols2: j.gols2,
+      classificado: j.classificado,
       valePontos,
     };
     await prisma.jogo.upsert({

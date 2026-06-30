@@ -4,7 +4,8 @@ import { agendarApuracao } from "@/lib/apuracao";
 import { chaveData, chaveHoje, rotuloData, horaBR, agoraMs } from "@/lib/datas";
 import { calcularRanking } from "@/lib/ranking";
 import { AppShell } from "@/components/app-shell";
-import { Bilhete, type JogoBilhete } from "@/components/bilhete";
+import { Bilhete, type JogoBilhete, type PalpiteSalvo } from "@/components/bilhete";
+import type { Lado } from "@/lib/pontuacao";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +30,14 @@ export default async function JogosPage() {
     calcularRanking(),
   ]);
 
-  const palpitesSalvos: Record<string, { placar1: number; placar2: number }> =
-    {};
+  const palpitesSalvos: Record<string, PalpiteSalvo> = {};
   for (const p of palpitesRaw) {
     if (p.placar1 != null && p.placar2 != null) {
-      palpitesSalvos[p.jogoId] = { placar1: p.placar1, placar2: p.placar2 };
+      palpitesSalvos[p.jogoId] = {
+        placar1: p.placar1,
+        placar2: p.placar2,
+        classificado: (p.classificado as Lado | null) ?? null,
+      };
     }
   }
 
@@ -51,6 +55,7 @@ export default async function JogosPage() {
     id: j.id,
     grupo: j.grupo,
     faseLabel: FASE_LABEL[j.fase] ?? j.fase,
+    mataMata: j.fase !== "grupos",
     kickoffMs: j.kickoff.getTime(),
     hora: horaBR(j.kickoff),
     dataKey: chaveData(j.kickoff),

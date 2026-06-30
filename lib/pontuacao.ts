@@ -5,9 +5,11 @@ export const PESOS = {
   overDoisMeio: 2, // acertar mais de 2.5 gols (sim/não)
   placarExato: 8, // acertar os dois números
   bonusJogoCheio: 3, // acertar os 3 obrigatórios no mesmo jogo
+  bonusClassificacao: 3, // mata-mata: previu empate e acertou quem classifica
 } as const;
 
 export type Resultado = "time1" | "empate" | "time2";
+export type Lado = "time1" | "time2";
 
 export type PalpiteParaCalculo = {
   resultado: Resultado;
@@ -15,6 +17,7 @@ export type PalpiteParaCalculo = {
   overDoisMeio: boolean;
   placar1: number | null;
   placar2: number | null;
+  classificado?: Lado | null; // quem o jogador acha que avança (palpite de empate)
 };
 
 export type DetalhePontos = {
@@ -24,6 +27,7 @@ export type DetalhePontos = {
   overDoisMeio: number;
   placarExato: number;
   bonus: number;
+  classificacao: number;
   total: number;
   // flags de acerto (pra UI do histórico)
   acertouResultado: boolean;
@@ -31,6 +35,7 @@ export type DetalhePontos = {
   acertouOver: boolean;
   acertouPlacar: boolean;
   jogoCheio: boolean;
+  acertouClassificacao: boolean;
 };
 
 export function resultadoReal(gols1: number, gols2: number): Resultado {
@@ -39,11 +44,13 @@ export function resultadoReal(gols1: number, gols2: number): Resultado {
   return "empate";
 }
 
-// Calcula a pontuação de um palpite dado o placar final. Função pura.
+// Calcula a pontuação de um palpite dado o placar final (bola rolando). Pura.
+// classificadoReal = quem avançou no mata-mata (null nos jogos de grupo).
 export function calcularPontos(
   p: PalpiteParaCalculo,
   gols1: number,
   gols2: number,
+  classificadoReal: Lado | null = null,
 ): DetalhePontos {
   const real = resultadoReal(gols1, gols2);
   const ambasReal = gols1 > 0 && gols2 > 0;
@@ -59,11 +66,20 @@ export function calcularPontos(
     p.placar2 === gols2;
   const jogoCheio = acertouResultado && acertouAmbas && acertouOver;
 
+  // Bônus de classificação: mata-mata que deu empate na bola rolando (foi pra
+  // pênaltis), o jogador previu empate e acertou quem avançou.
+  const acertouClassificacao =
+    classificadoReal != null &&
+    real === "empate" &&
+    p.resultado === "empate" &&
+    p.classificado === classificadoReal;
+
   const resultado = acertouResultado ? PESOS.resultado : 0;
   const ambasMarcam = acertouAmbas ? PESOS.ambasMarcam : 0;
   const overDoisMeio = acertouOver ? PESOS.overDoisMeio : 0;
   const placarExato = acertouPlacar ? PESOS.placarExato : 0;
   const bonus = jogoCheio ? PESOS.bonusJogoCheio : 0;
+  const classificacao = acertouClassificacao ? PESOS.bonusClassificacao : 0;
 
   return {
     resultado,
@@ -71,11 +87,19 @@ export function calcularPontos(
     overDoisMeio,
     placarExato,
     bonus,
-    total: resultado + ambasMarcam + overDoisMeio + placarExato + bonus,
+    classificacao,
+    total:
+      resultado +
+      ambasMarcam +
+      overDoisMeio +
+      placarExato +
+      bonus +
+      classificacao,
     acertouResultado,
     acertouAmbas,
     acertouOver,
     acertouPlacar,
     jogoCheio,
+    acertouClassificacao,
   };
 }

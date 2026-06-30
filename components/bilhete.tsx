@@ -8,12 +8,14 @@ import { bandeira } from "@/lib/bandeiras";
 import { confirmarBilhete } from "@/app/jogos/actions";
 import { TabelaRanking } from "@/components/tabela-ranking";
 import { ComoPontua } from "@/components/como-pontua";
+import { PESOS, type Lado } from "@/lib/pontuacao";
 import type { LinhaRanking } from "@/lib/ranking";
 
 export type JogoBilhete = {
   id: string;
   grupo: string | null;
   faseLabel: string;
+  mataMata: boolean;
   kickoffMs: number;
   hora: string;
   dataKey: string;
@@ -24,8 +26,27 @@ export type JogoBilhete = {
   sigla2: string;
 };
 
-type Selecao = { p1: string; p2: string };
-type ItemView = { jogo: JogoBilhete; p1: number; p2: number };
+export type PalpiteSalvo = {
+  placar1: number;
+  placar2: number;
+  classificado: Lado | null;
+};
+
+type Selecao = { p1: string; p2: string; classificado?: Lado | null };
+type ItemView = {
+  jogo: JogoBilhete;
+  p1: number;
+  p2: number;
+  classificado: Lado | null;
+};
+
+// "Quem classifica" só importa em mata-mata com palpite de empate.
+function classifEfetivo(jogo: JogoBilhete, s: Selecao): Lado | null {
+  if (!jogo.mataMata) return null;
+  if (s.p1.trim() === "" || s.p2.trim() === "") return null;
+  if (Number(s.p1) !== Number(s.p2)) return null;
+  return s.classificado ?? null;
+}
 
 function valido(s: Selecao | undefined): s is Selecao {
   if (!s) return false;
@@ -60,17 +81,22 @@ export function Bilhete({
   nome,
 }: {
   jogos: JogoBilhete[];
-  palpitesSalvos: Record<string, { placar1: number; placar2: number }>;
+  palpitesSalvos: Record<string, PalpiteSalvo>;
   ranking: LinhaRanking[];
   jogadorId: string;
   serverNowMs: number;
   hoje: string;
   nome: string;
 }) {
+  const jogoById = new Map(jogos.map((j) => [j.id, j]));
   const [selecoes, setSelecoes] = useState<Record<string, Selecao>>(() => {
     const init: Record<string, Selecao> = {};
     for (const [id, p] of Object.entries(palpitesSalvos)) {
-      init[id] = { p1: String(p.placar1), p2: String(p.placar2) };
+      init[id] = {
+        p1: String(p.placar1),
+        p2: String(p.placar2),
+        classificado: p.classificado,
+      };
     }
     return init;
   });
@@ -86,9 +112,27 @@ export function Bilhete({
     });
   }
 
+  function setClassificado(id: string, lado: Lado) {
+    setMsg(null);
+    setSelecoes((prev) => {
+      const atual = prev[id] ?? { p1: "", p2: "" };
+      return { ...prev, [id]: { ...atual, classificado: lado } };
+    });
+  }
+
+  function classifDe(id: string, s: Selecao): Lado | null {
+    const jogo = jogoById.get(id);
+    return jogo ? classifEfetivo(jogo, s) : null;
+  }
+
   function difereDoSalvo(id: string, s: Selecao): boolean {
     const sv = palpitesSalvos[id];
-    return !sv || sv.placar1 !== Number(s.p1) || sv.placar2 !== Number(s.p2);
+    if (!sv) return true;
+    return (
+      sv.placar1 !== Number(s.p1) ||
+      sv.placar2 !== Number(s.p2) ||
+      (sv.classificado ?? null) !== classifDe(id, s)
+    );
   }
 
   const pendentes = jogos.filter(
@@ -98,6 +142,7 @@ export function Bilhete({
     jogo: j,
     p1: Number(selecoes[j.id]!.p1),
     p2: Number(selecoes[j.id]!.p2),
+    classificado: classifDe(j.id, selecoes[j.id]!),
   }));
   const feitasView: ItemView[] = jogos
     .filter((j) => palpitesSalvos[j.id])
@@ -105,6 +150,7 @@ export function Bilhete({
       jogo: j,
       p1: palpitesSalvos[j.id].placar1,
       p2: palpitesSalvos[j.id].placar2,
+      classificado: palpitesSalvos[j.id].classificado,
     }));
 
   function handleConfirmar() {
@@ -113,6 +159,7 @@ export function Bilhete({
       jogoId: j.id,
       placar1: Number(selecoes[j.id].p1),
       placar2: Number(selecoes[j.id].p2),
+      classificado: classifDe(j.id, selecoes[j.id]),
     }));
     startTransition(async () => {
       const res = await confirmarBilhete(payload);
@@ -174,6 +221,7 @@ export function Bilhete({
                   jogo={j}
                   {...estadoDoJogo(j)}
                   onChange={setPlacar}
+                  onClassificado={setClassificado}
                 />
               ))}
             </section>
@@ -238,6 +286,7 @@ export function Bilhete({
                   jogo={j}
                   {...estadoDoJogo(j)}
                   onChange={setPlacar}
+                  onClassificado={setClassificado}
                 />
               ))}
             </section>
@@ -372,6 +421,75 @@ function CabecalhoJogo({
   );
 }
 
+// Seletor "quem classifica" — só em mata-mata com palpite de empate (não travado).
+function ClassificaPicker({
+  jogo,
+  selecao,
+  travado,
+  onClassificado,
+}: {
+  jogo: JogoBilhete;
+  selecao: Selecao | undefined;
+  travado: boolean;
+  onClassificado: (id: string, lado: Lado) => void;
+}) {
+  const empate =
+    valido(selecao) && Number(selecao!.p1) === Number(selecao!.p2);
+  if (travado || !jogo.mataMata || !empate) return null;
+  const escolhido = selecao?.classificado ?? null;
+
+  return (
+    <div className="border-t-2 border-border px-3 py-2">
+      <p className="mb-1.5 flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">
+        <span>Empate — quem classifica?</span>
+        <span className="rounded border-2 border-border bg-accent px-1.5 py-0.5 text-accent-foreground">
+          {`+${PESOS.bonusClassificacao}`}
+        </span>
+      </p>
+      <div className="flex gap-2">
+        <ClassifBtn
+          ativo={escolhido === "time1"}
+          onClick={() => onClassificado(jogo.id, "time1")}
+        >
+          {bandeira(jogo.sigla1)} {jogo.sigla1}
+        </ClassifBtn>
+        <ClassifBtn
+          ativo={escolhido === "time2"}
+          onClick={() => onClassificado(jogo.id, "time2")}
+        >
+          {bandeira(jogo.sigla2)} {jogo.sigla2}
+        </ClassifBtn>
+      </div>
+    </div>
+  );
+}
+
+function ClassifBtn({
+  ativo,
+  onClick,
+  children,
+}: {
+  ativo: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={ativo}
+      onClick={onClick}
+      className={cn(
+        "h-9 flex-1 rounded-md border-2 border-border text-sm font-bold transition-all",
+        ativo
+          ? "translate-x-[2px] translate-y-[2px] bg-main text-main-foreground shadow-none"
+          : "bg-secondary-background text-foreground shadow-[2px_2px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 // Linha de jogo do desktop (formato largo, time | placar | time).
 function LinhaJogo({
   jogo,
@@ -380,6 +498,7 @@ function LinhaJogo({
   pendente,
   salvo,
   onChange,
+  onClassificado,
 }: {
   jogo: JogoBilhete;
   selecao: Selecao | undefined;
@@ -387,6 +506,7 @@ function LinhaJogo({
   pendente: boolean;
   salvo: boolean;
   onChange: (id: string, lado: "p1" | "p2", v: string) => void;
+  onClassificado: (id: string, lado: Lado) => void;
 }) {
   const ok = valido(selecao);
   const d =
@@ -432,6 +552,12 @@ function LinhaJogo({
           <StatusBadge travado={travado} pendente={pendente} salvo={salvo} />
         </div>
       ) : null}
+      <ClassificaPicker
+        jogo={jogo}
+        selecao={selecao}
+        travado={travado}
+        onClassificado={onClassificado}
+      />
     </article>
   );
 }
@@ -444,6 +570,7 @@ function CardMobile({
   pendente,
   salvo,
   onChange,
+  onClassificado,
 }: {
   jogo: JogoBilhete;
   selecao: Selecao | undefined;
@@ -451,6 +578,7 @@ function CardMobile({
   pendente: boolean;
   salvo: boolean;
   onChange: (id: string, lado: "p1" | "p2", v: string) => void;
+  onClassificado: (id: string, lado: Lado) => void;
 }) {
   const ok = valido(selecao);
   const d =
@@ -498,6 +626,12 @@ function CardMobile({
           <StatusBadge travado={travado} pendente={pendente} salvo={salvo} />
         </div>
       ) : null}
+      <ClassificaPicker
+        jogo={jogo}
+        selecao={selecao}
+        travado={travado}
+        onClassificado={onClassificado}
+      />
     </article>
   );
 }
@@ -543,6 +677,12 @@ function Sheet({
 
 function ItemLinha({ item, marcador }: { item: ItemView; marcador: ReactNode }) {
   const d = deriva(item.p1, item.p2, item.jogo.sigla1, item.jogo.sigla2);
+  const classifSigla =
+    item.classificado === "time1"
+      ? item.jogo.sigla1
+      : item.classificado === "time2"
+        ? item.jogo.sigla2
+        : null;
   return (
     <li className="px-3 py-2">
       <div className="flex items-center justify-between gap-2 text-sm font-extrabold text-foreground">
@@ -554,6 +694,7 @@ function ItemLinha({ item, marcador }: { item: ItemView; marcador: ReactNode }) 
       <p className="text-[11px] font-bold text-muted-foreground">
         vence {d.resultado} · ambas {d.ambas ? "sim" : "não"} · +2.5{" "}
         {d.over ? "sim" : "não"}
+        {classifSigla ? ` · classifica ${classifSigla}` : ""}
       </p>
     </li>
   );
